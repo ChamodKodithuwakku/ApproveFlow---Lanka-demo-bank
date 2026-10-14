@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Infrastructure: EF Core persistence, Identity, audit interceptors, reporting, CSV import, AI client. -->
+  <PropertyGroup>
+    <RootNamespace>ApproveFlow.Infrastructure</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ApproveFlow.Application\ApproveFlow.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CsvHelper" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <!--
+    The T-SQL objects in /database are the single source of truth. They are embedded here so the
+    EF Core migration that creates stored procedures, views and triggers applies exactly the same scripts.
+  -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\database\procedures\*.sql" LinkBase="Persistence\Sql\procedures" LogicalName="ApproveFlow.Sql.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\..\database\views\*.sql" LinkBase="Persistence\Sql\views" LogicalName="ApproveFlow.Sql.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\..\database\triggers\*.sql" LinkBase="Persistence\Sql\triggers" LogicalName="ApproveFlow.Sql.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="ApproveFlow.Tests" />
+  </ItemGroup>
+
+</Project>

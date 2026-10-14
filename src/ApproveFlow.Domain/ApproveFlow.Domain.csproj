@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Domain layer: entities, enums and business rules. Deliberately has no package or project dependencies. -->
+  <PropertyGroup>
+    <RootNamespace>ApproveFlow.Domain</RootNamespace>
+  </PropertyGroup>
+
+</Project>
