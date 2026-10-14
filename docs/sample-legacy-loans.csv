@@ -1,0 +1,51 @@
+LegacyReference,CustomerNic,CustomerName,BranchCode,ProductCode,Amount,TenureMonths,InterestRate,MonthlyIncome,ExistingObligations,Purpose,Status,ApplicationDate
+LEG-2020-01001,197211130371,Anura Mendis,KDY,PL,3010000.00,36,15.25,220000.00,53000.00,Medical treatment for a family member,Approved,2020-05-18
+LEG-2021-01002,197912230742,Bimali Premaratne,GLE,HL,10500000.00,180,11.50,333000.00,66500.00,Construction of a single-storey house,Approved,2021-05-08
+LEG-2022-01003,198613331113,Chathura Thilakaratne,COL,VL,"1,750,000.00",72,14.00,200000.00,28000.00,Purchase of a registered used car,Rejected,2022-11-27
+LEG-2023-01004,199314431484,Dilshan Wanigasekara,KDY,SME,1240000.00,24,13.50,121000.00,6000.00,Purchase of a rice mill machine,Approved,2023-10-03
+LEG-2024-01005,196515531855,Eranga Amarasinghe,MTR,PL,3130000.00,36,15.00,213000.00,30000.00,Home appliances and furniture purchase,Submitted,2024-01-07
+LEG-2019-01006,197216632226,Fathima Dharmasena,COL,HL,9780000.00,180,12.00,394000.00,55000.00,Extension of an existing residence,Approved,2019-11-07
+LEG-2020-01007,197917732597,Gihan Galappaththi,KDY,VL,4610000.00,48,13.50,226000.00,49500.00,Purchase of a light commercial vehicle,Rejected,2020-07-14
+LEG-2021-01008,197917732597,Gihan Galappaththi,GLE,SME,4720000.00,36,12.75,239000.00,7000.00,Expansion of a tea processing unit,Approved,2021-06-15
+LEG-2022-01009,199319933339,Indika Kariyawasam,COL,PL,950000.00,60,15.75,156000.00,8000.00,Home appliances and furniture purchase,Approved,2022-05-17
+LEG-2023-01010,196521033700,Janaki Opanayake,KDY,GOLD,4750000.00,180,12.25,202000.00,8000.00,Purchase of a condominium unit,Approved,2023-08-09
+LEG-2024-01011,197222134071,Kamal Seneviratne,GLE,VL,900000.00,72,13.75,153000.00,10500.00,Purchase of a registered used car,Rejected,2024-01-17
+LEG-2019-01012,197923234442,Lakmini Vithanage,COL,SME,9290000.00,36,12.75,284000.00,25500.00,Purchase of a rice mill machine,Approved,2019-11-15
+LEG-2020-01013,198624334813,Manoj Zoysa,KDY,PL,3270000.00,36,15.25,228000.00,54500.00,Medical treatment for a family member,Submitted,2020-05-17
+LEG-2021-01014,199325435184,Nirosha Cooray,GLE,HL,-450000.00,120,12.25,560000.00,50500.00,Purchase of a condominium unit,Approved,2021-09-20
+LEG-2022-01015,196526535555,Oshadi Fernandopulle,COL,VL,7300000.00,72,13.75,334000.00,13500.00,Purchase of a light commercial vehicle,Rejected,2022-04-17
+LEG-2023-01016,197227635926,Prasanna Ilangakoon,KDY,SME,3470000.00,84,13.00,198000.00,39500.00,Purchase of a rice mill machine,Approved,2023-08-09
+LEG-2024-01017,197928736297,Rukshan Jayasinghe,GLE,PL,2440000.00,500,15.75,169000.00,7000.00,Home appliances and furniture purchase,Approved,2024-02-16
+LEG-2019-01018,198629836668,Samanthi Nanayakkara,COL,HL,8870000.00,180,12.00,331000.00,33000.00,Purchase of a condominium unit,Approved,2019-05-08
+LEG-2020-01019,199330937039,Tharindu Ratnayake,KDY,VL,5250000.00,60,14.00,177000.00,12500.00,Purchase of a light commercial vehicle,Rejected,2020-06-19
+LEG-2021-01020,12345,Upeksha Udugama,GLE,SME,5090000.00,24,12.75,232000.00,18500.00,Purchase of a rice mill machine,Approved,2021-09-08
+LEG-2022-01021,197233137771,Vimukthi Yapa,COL,PL,2900000.00,60,14.75,208000.00,16500.00,Home appliances and furniture purchase,Submitted,2022-08-12
+LEG-2023-01022,197233137771,Vimukthi Yapa,KDY,HL,3670000.00,240,11.50,174000.00,14000.00,Extension of an existing residence,Approved,2023-09-04
+LEG-2024-01023,198635338513,Yasas Edirisinghe,GLE,VL,3200000.00,48,13.00,191000.00,42000.00,Purchase of a brand-new motor car,Rejected,2024-04-08
+LEG-2019-01024,199336438884,Zainab Hapuarachchi,COL,SME,1280000.00,24,12.75,158000.00,11000.00,Expansion of a tea processing unit,Approved,2019-02-04
+LEG-2019-01024,196537539255,Asela Gunawardena,KDY,PL,2190000.00,36,15.75,109000.00,17500.00,Education expenses for a professional qualification,Approved,2020-04-09
+LEG-2021-01026,197238639626,Anura Mendis,GLE,HL,7330000.00,120,12.50,278000.00,28000.00,Extension of an existing residence,Approved,2021-06-18
+LEG-2022-01027,197939739997,Bimali Premaratne,COL,VL,1020000.00,72,14.00,128000.00,16500.00,Purchase of a registered used car,Rejected,2022-06-13
+LEG-2023-01028,198640840368,Chathura Thilakaratne,KDY,SME,7980000.00,84,12.75,328000.00,16500.00,Expansion of a tea processing unit,Approved,2023-09-11
+LEG-2024-01029,199341940739,,GLE,PL,2220000.00,48,15.25,109000.00,7500.00,Education expenses for a professional qualification,Submitted,2024-08-12
+LEG-2019-01030,196543041100,Eranga Amarasinghe,COL,HL,7290000.00,180,12.25,299000.00,6000.00,Purchase of a condominium unit,Approved,2019-10-06
+LEG-2020-01031,197244141471,Fathima Dharmasena,KDY,VL,2390000.00,36,13.75,202000.00,34500.00,Purchase of a registered used car,Rejected,2020-01-10
+LEG-2021-01032,197945241842,Gihan Galappaththi,GLE,SME,"1,2O0,000.00",24,13.50,179000.00,2000.00,Working capital for a hardware store,Approved,2021-01-05
+LEG-2022-01033,198646342213,Hasini Jinadasa,COL,PL,2720000.00,48,15.00,140000.00,3000.00,Education expenses for a professional qualification,Approved,2022-04-25
+LEG-2023-01034,199347442584,Indika Kariyawasam,KDY,HL,9070000.00,180,11.50,383000.00,50000.00,Construction of a single-storey house,Approved,2023-12-03
+LEG-2024-01035,196548542955,Janaki Opanayake,GLE,VL,6750000.00,72,14.00,291000.00,55500.00,Purchase of a light commercial vehicle,Rejected,2024-01-28
+LEG-2019-01036,197249643326,Kamal Seneviratne,COL,SME,9230000.00,24,13.00,339000.00,40500.00,Expansion of a tea processing unit,Approved,2031-01-15
+LEG-2020-01037,197950743697,Lakmini Vithanage,KDY,PL,650000.00,24,15.50,146000.00,35000.00,Education expenses for a professional qualification,Submitted,2020-05-20
+LEG-2021-01038,198651844068,Manoj Zoysa,GLE,HL,4240000.00,240,11.50,161000.00,9500.00,Extension of an existing residence,Approved,2021-02-27
+LEG-2022-01039,199352944439,Nirosha Cooray,COL,VL,4400000.00,36,13.50,228000.00,13500.00,Purchase of a registered used car,Rejected,2022-10-11
+LEG-2023-01040,196554044800,Oshadi Fernandopulle,KDY,SME,8790000.00,84,13.50,304000.00,6000.00,Expansion of a tea processing unit,Pending,2023-07-14
+LEG-2024-01041,197255145171,Prasanna Ilangakoon,GLE,PL,9000000.00,60,15.00,152000.00,36500.00,Education expenses for a professional qualification,Approved,2024-09-08
+LEG-2019-01042,197956245542,Rukshan Jayasinghe,COL,HL,8310000.00,180,12.00,265000.00,40000.00,Purchase of a condominium unit,Approved,2019-07-06
+LEG-2020-01043,198657345913,Samanthi Nanayakkara,KDY,VL,2260000.00,72,13.25,141000.00,12500.00,Purchase of a brand-new motor car,Rejected,2020-08-23
+LEG-2021-01044,199358446284,Tharindu Ratnayake,GLE,SME,8550000.00,24,13.00,273000.00,43500.00,Working capital for a hardware store,Approved,2021-01-08
+LEG-2022-01045,196559546655,Upeksha Udugama,COL,PL,1460000.00,48,15.75,114000.00,10500.00,Education expenses for a professional qualification,Submitted,2022-05-16
+LEG-2023-01046,197260647026,Vimukthi Yapa,KDY,HL,17120000.00,120,11.50,515000.00,20500.00,Extension of an existing residence,Approved,2023-02-05
+LEG-2024-01047,197961747397,Waruni Batagoda,GLE,VL,4880000.00,36,13.25,193000.00,36500.00,Purchase of a registered used car,Rejected,2024-05-10
+LEG-2019-01048,198662847768,Yasas Edirisinghe,COL,SME,820000.00,60,13.00,117000.00,24500.00,Expansion of a tea processing unit,Approved,2019-08-03
+LEG-2020-01049,199363948139,Zainab Hapuarachchi,KDY,PL,720000.00,60,15.50,123000.00,24500.00,Education expenses for a professional qualification,Approved,2020-03-19
+LEG-2021-01050,196565048500,Asela Gunawardena,GLE,HL,9820000.00,180,11.75,389000.00,0.00,Purchase of a condominium unit,Approved,2021-08-01

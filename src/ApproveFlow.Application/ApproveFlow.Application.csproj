@@ -5,7 +5,7 @@
     <RootNamespace>ApproveFlow.Application</RootNamespace>
     <!-- DTO documentation is surfaced in the Swagger/OpenAPI document. -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <NoWarn>$(NoWarn);CS1591;CS1573</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

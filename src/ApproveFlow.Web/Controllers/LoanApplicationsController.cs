@@ -198,6 +198,34 @@ public sealed class LoanApplicationsController : AppController
         }
     }
 
+    /// <summary>AI risk summary (Checker/Auditor). JSON for the details page; rendered client-side with textContent only.</summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Policy = Policies.RiskSummary)]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(RateLimitPolicies.Api)]
+    public async Task<IActionResult> RiskSummary(int id, [FromServices] ApproveFlow.Application.AiRisk.IRiskSummaryAppService riskSummaries,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var r = await riskSummaries.GenerateAsync(id, cancellationToken);
+            return Json(new
+            {
+                riskLevel = r.RiskLevel.ToString(),
+                summary = r.Summary,
+                factors = r.Factors,
+                isFallback = r.IsFallback,
+                model = r.Model ?? r.Source,
+                fallbackReason = r.FallbackReason,
+                generatedAt = ApproveFlow.Web.Infrastructure.Display.Time(r.GeneratedAtUtc),
+            });
+        }
+        catch (NotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
     private async Task<IActionResult> RunAsync(int id, Func<Task<string>> action)
     {
         try

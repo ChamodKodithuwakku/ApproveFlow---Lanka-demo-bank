@@ -1,0 +1,149 @@
+@model ReportsViewModel
+@{
+    ViewData["Title"] = "Reports";
+    var s = Model.Summary;
+    var c = Model.Criteria;
+    string StatusLabel(string status) => Enum.TryParse<LoanStatus>(status, out var parsed) ? Display.StatusLabel(parsed) : status;
+    string Hours(decimal? hours) => hours.HasValue ? (hours.Value >= 48 ? Display.Number(hours.Value / 24, 1) + " days" : Display.Number(hours.Value, 1) + " h") : "—";
+    var chartJson = s is null ? "{}" : System.Text.Json.JsonSerializer.Serialize(new
+    {
+        statusLabels = s.ByStatus.Select(r => StatusLabel(r.Status)),
+        statusCounts = s.ByStatus.Select(r => r.ApplicationCount),
+        branchLabels = s.ByBranch.Select(r => r.BranchName),
+        branchApproved = s.ByBranch.Select(r => r.ApprovedCount),
+        branchRejected = s.ByBranch.Select(r => r.RejectedCount),
+        branchPending = s.ByBranch.Select(r => r.PendingCount),
+    });
+}
+
+<div class="af-page-header">
+    <div>
+        <h1 class="af-page-title">Approval reports</h1>
+        <p class="af-page-subtitle">Applications created in the selected period (Asia/Colombo dates).</p>
+    </div>
+</div>
+
+<div class="card af-card mb-3">
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="af-filter">
+            <div>
+                <label class="form-label small" for="from">From</label>
+                <input type="date" class="form-control" id="from" name="from" value="@c.FromDate.ToString("yyyy-MM-dd")" required />
+            </div>
+            <div>
+                <label class="form-label small" for="to">To</label>
+                <input type="date" class="form-control" id="to" name="to" value="@c.ToDate.ToString("yyyy-MM-dd")" required />
+            </div>
+            <div>
+                <label class="form-label small" for="branchId">Branch</label>
+                <select class="form-select" id="branchId" name="branchId">
+                    <option value="">All branches</option>
+                    @foreach (var b in Model.Branches)
+                    {
+                        <option value="@b.Id" selected="@(c.BranchId == b.Id)">@b.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="af-filter-actions">
+                <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-arrow-repeat me-1"></i>Run report</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.Error is not null)
+{
+    <div class="alert alert-warning">@Model.Error</div>
+}
+
+@if (s is not null)
+{
+    <div class="row g-3 mb-3">
+        <div class="col-sm-6 col-xl-3"><div class="af-kpi"><span class="af-kpi-label">Applications</span><span class="af-kpi-value">@s.Overall.TotalApplications</span><span class="af-kpi-sub">@Display.Money(s.Overall.TotalAmount)</span></div></div>
+        <div class="col-sm-6 col-xl-3"><div class="af-kpi"><span class="af-kpi-label">Approval rate</span><span class="af-kpi-value">@(s.Overall.ApprovalRatePercent.HasValue ? s.Overall.ApprovalRatePercent.Value.ToString("0.0") + "%" : "—")</span><span class="af-kpi-sub">@s.Overall.ApprovedCount approved · @s.Overall.RejectedCount rejected</span></div></div>
+        <div class="col-sm-6 col-xl-3"><div class="af-kpi"><span class="af-kpi-label">Avg. turnaround</span><span class="af-kpi-value">@Hours(s.Overall.AverageTurnaroundHours)</span><span class="af-kpi-sub">First submission → final decision (@s.Overall.DecidedCount decided)</span></div></div>
+        <div class="col-sm-6 col-xl-3"><div class="af-kpi"><span class="af-kpi-label">Fastest / slowest</span><span class="af-kpi-value">@Hours(s.Overall.MinTurnaroundHours)</span><span class="af-kpi-sub">slowest @Hours(s.Overall.MaxTurnaroundHours)</span></div></div>
+    </div>
+
+    <script type="application/json" id="reportData">@Html.Raw(chartJson)</script>
+    <div class="row g-3 mb-3">
+        <div class="col-lg-5">
+            <div class="card af-card h-100">
+                <div class="card-header af-card-header"><h2 class="af-card-title">By status</h2></div>
+                <div class="card-body"><div class="af-chart-box-lg"><canvas id="statusChart" role="img" aria-label="Applications by status"></canvas></div></div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="card af-card h-100">
+                <div class="card-header af-card-header"><h2 class="af-card-title">Outcomes by branch</h2></div>
+                <div class="card-body"><div class="af-chart-box-lg"><canvas id="branchChart" role="img" aria-label="Approved, rejected and pending by branch"></canvas></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-xl-6">
+            <div class="card af-card h-100">
+                <div class="card-header af-card-header"><h2 class="af-card-title">By branch</h2></div>
+                <div class="table-responsive">
+                    <table class="table af-table mb-0">
+                        <thead><tr><th>Branch</th><th class="text-end">Apps</th><th class="text-end">Total (LKR)</th><th class="text-end">Approved</th><th class="text-end">Rejected</th><th class="text-end">Pending</th></tr></thead>
+                        <tbody>
+                            @foreach (var r in s.ByBranch)
+                            {
+                                <tr><td>@r.BranchName</td><td class="text-end">@r.ApplicationCount</td><td class="text-end">@Display.Number(r.TotalAmount, 0)</td><td class="text-end">@r.ApprovedCount</td><td class="text-end">@r.RejectedCount</td><td class="text-end">@r.PendingCount</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6">
+            <div class="card af-card h-100">
+                <div class="card-header af-card-header"><h2 class="af-card-title">By product</h2></div>
+                <div class="table-responsive">
+                    <table class="table af-table mb-0">
+                        <thead><tr><th>Product</th><th class="text-end">Apps</th><th class="text-end">Total (LKR)</th><th class="text-end">Approved (LKR)</th><th class="text-end">Average (LKR)</th></tr></thead>
+                        <tbody>
+                            @foreach (var r in s.ByProduct)
+                            {
+                                <tr><td>@r.ProductName</td><td class="text-end">@r.ApplicationCount</td><td class="text-end">@Display.Number(r.TotalAmount, 0)</td><td class="text-end">@Display.Number(r.ApprovedAmount, 0)</td><td class="text-end">@Display.Number(r.AverageAmount, 0)</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card af-card mb-3">
+        <div class="card-header af-card-header">
+            <div>
+                <h2 class="af-card-title">Checker performance</h2>
+                <p class="af-card-subtitle">Decisions taken in the period · response time from latest submission</p>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table af-table mb-0">
+                <thead><tr><th>Checker</th><th class="text-end">Decisions</th><th class="text-end">Approved</th><th class="text-end">First approvals</th><th class="text-end">Rejected</th><th class="text-end">Returned</th><th class="text-end">Approved (LKR)</th><th class="text-end">Avg. response</th></tr></thead>
+                <tbody>
+                    @foreach (var r in Model.Checkers)
+                    {
+                        <tr><td>@r.CheckerName</td><td class="text-end">@r.TotalDecisions</td><td class="text-end">@r.ApprovedCount</td><td class="text-end">@r.FirstApprovalCount</td><td class="text-end">@r.RejectedCount</td><td class="text-end">@r.ReturnedCount</td><td class="text-end">@Display.Number(r.ApprovedAmount, 0)</td><td class="text-end">@Hours(r.AverageResponseHours)</td></tr>
+                    }
+                    @if (Model.Checkers.Count == 0)
+                    {
+                        <tr><td colspan="8" class="text-center text-muted py-4">No checker decisions in this period.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <p class="small text-muted"><i class="bi bi-database me-1"></i>Data source: <code>@s.Source</code> and <code>dbo.usp_GetCheckerPerformance</code> on SQL Server.</p>
+}
+
+@section Scripts {
+    <script src="~/lib/chart.js/chart.umd.min.js"></script>
+    <script src="~/js/reports.js" asp-append-version="true"></script>
+}

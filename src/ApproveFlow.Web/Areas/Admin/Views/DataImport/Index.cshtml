@@ -1,0 +1,79 @@
+@model IReadOnlyList<ApproveFlow.Application.DataImport.ImportBatchSummaryDto>
+@{
+    ViewData["Title"] = "Data migration";
+}
+<div class="af-page-header">
+    <div>
+        <h1 class="af-page-title">Legacy data migration</h1>
+        <p class="af-page-subtitle">Upload a CSV of legacy loan applications. Valid rows are imported in one transaction; invalid rows are recorded with their line number and reason.</p>
+    </div>
+    <a asp-action="Template" class="btn btn-outline-primary"><i class="bi bi-download me-1"></i>CSV template</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-7">
+        <div class="card af-card h-100">
+            <div class="card-header af-card-header"><h2 class="af-card-title"><i class="bi bi-cloud-arrow-up me-1"></i>Upload file</h2></div>
+            <div class="card-body">
+                <form asp-action="Upload" method="post" enctype="multipart/form-data"
+                      data-confirm="Import this file? Valid rows will be created as loan applications and the batch will be recorded in the audit trail."
+                      data-confirm-title="Import legacy data" data-confirm-button="Import">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">CSV file (max 2 MB, 5,000 rows)</label>
+                        <input type="file" class="form-control" id="file" name="file" accept=".csv,text/csv" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Validate and import</button>
+                </form>
+                <p class="small text-muted mt-3 mb-0">
+                    A sample with deliberately invalid rows is provided in the repository at <code>docs/sample-legacy-loans.csv</code>.
+                    Importing the same file twice is blocked (SHA-256 fingerprint).
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card af-card h-100">
+            <div class="card-header af-card-header"><h2 class="af-card-title">Validation rules</h2></div>
+            <div class="card-body small">
+                <ul class="mb-0 ps-3">
+                    <li>All 13 columns present; required fields populated</li>
+                    <li>Numbers and dates (yyyy-MM-dd) parse; date not in the future</li>
+                    <li>Amount and tenure within the product's limits; rate 0–100%</li>
+                    <li>Known, active branch and product codes</li>
+                    <li>Valid NIC; name required for new customers</li>
+                    <li>Legacy reference unique in the file and in ApproveFlow</li>
+                    <li>Status: Approved, Rejected or Submitted</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card af-card">
+    <div class="card-header af-card-header"><h2 class="af-card-title">Import history</h2></div>
+    <div class="table-responsive">
+        <table class="table af-table table-hover mb-0">
+            <thead><tr><th>Batch</th><th>File</th><th>When</th><th>By</th><th class="text-end">Rows</th><th class="text-end">Imported</th><th class="text-end">Rejected</th><th class="text-end">Amount in file</th><th>Reconciled</th></tr></thead>
+            <tbody>
+                @foreach (var b in Model)
+                {
+                    <tr>
+                        <td><a asp-action="Batch" asp-route-id="@b.Id" class="af-ref">#@b.Id</a></td>
+                        <td class="small">@b.FileName</td>
+                        <td class="small text-nowrap">@Display.Time(b.StartedAtUtc)</td>
+                        <td class="small">@b.ImportedByName</td>
+                        <td class="text-end">@b.TotalRows</td>
+                        <td class="text-end text-success">@b.ImportedRows</td>
+                        <td class="text-end text-danger">@b.RejectedRows</td>
+                        <td class="text-end">@Display.Number(b.TotalAmountInFile, 0)</td>
+                        <td>@if (b.IsReconciled) { <i class="bi bi-check-circle-fill af-recon-ok" title="Reconciled"></i> } else { <i class="bi bi-x-circle-fill af-recon-bad" title="Not reconciled"></i> }</td>
+                    </tr>
+                }
+                @if (Model.Count == 0)
+                {
+                    <tr><td colspan="9" class="text-center text-muted py-4">No imports yet.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

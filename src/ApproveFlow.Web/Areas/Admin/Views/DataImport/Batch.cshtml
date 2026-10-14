@@ -1,0 +1,80 @@
+@model ApproveFlow.Application.DataImport.ImportResultDto
+@{
+    ViewData["Title"] = $"Import batch #{Model.BatchId}";
+}
+<nav aria-label="breadcrumb" class="mb-2">
+    <ol class="breadcrumb small mb-0">
+        <li class="breadcrumb-item"><a asp-action="Index">Data migration</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Batch #@Model.BatchId</li>
+    </ol>
+</nav>
+<div class="af-page-header">
+    <div>
+        <h1 class="af-page-title">Reconciliation report · batch #@Model.BatchId</h1>
+        <p class="af-page-subtitle">@Model.FileName · imported by @Model.ImportedByName · @Display.Time(Model.CompletedAtUtc ?? Model.StartedAtUtc)</p>
+    </div>
+    <a asp-controller="LoanApplications" asp-action="Index" asp-area="" class="btn btn-outline-primary"><i class="bi bi-folder2-open me-1"></i>View applications</a>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6">
+        <div class="card af-card h-100">
+            <div class="card-header af-card-header"><h2 class="af-card-title">Rows</h2></div>
+            <div class="card-body">
+                <div class="af-calc-row"><span>Total rows in file</span><strong>@Model.TotalRows</strong></div>
+                <div class="af-calc-row"><span>Imported</span><strong class="text-success">@Model.ImportedRows</strong></div>
+                <div class="af-calc-row"><span>Rejected</span><strong class="text-danger">@Model.RejectedRows</strong></div>
+                <hr />
+                <div class="af-calc-row"><span>Imported + rejected</span><strong>@(Model.ImportedRows + Model.RejectedRows)</strong></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card af-card h-100">
+            <div class="card-header af-card-header"><h2 class="af-card-title">Amounts (LKR)</h2></div>
+            <div class="card-body">
+                <div class="af-calc-row"><span>Total amount in file</span><strong>@Display.Number(Model.TotalAmountInFile)</strong></div>
+                <div class="af-calc-row"><span>Imported amount</span><strong class="text-success">@Display.Number(Model.ImportedAmount)</strong></div>
+                <div class="af-calc-row"><span>Rejected amount</span><strong class="text-danger">@Display.Number(Model.RejectedAmount)</strong></div>
+                <hr />
+                <div class="af-calc-row"><span>Imported + rejected</span><strong>@Display.Number(Model.ImportedAmount + Model.RejectedAmount)</strong></div>
+                <p class="small text-muted mb-0 mt-2">Rows whose amount could not be read contribute zero to both sides.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.IsReconciled)
+{
+    <div class="alert alert-success d-flex gap-2 align-items-center"><i class="bi bi-check-circle-fill fs-5"></i><div><strong>Reconciled.</strong> Row counts and amounts balance: every row in the file is either imported or rejected with a reason.</div></div>
+}
+else
+{
+    <div class="alert alert-danger d-flex gap-2 align-items-center"><i class="bi bi-x-circle-fill fs-5"></i><div><strong>Not reconciled.</strong> Investigate before relying on this batch.</div></div>
+}
+
+<div class="card af-card">
+    <div class="card-header af-card-header">
+        <h2 class="af-card-title">Rejected rows (@Model.Errors.Count)</h2>
+    </div>
+    <div class="table-responsive">
+        <table class="table af-table mb-0">
+            <thead><tr><th>Line</th><th>Legacy reference</th><th>Reason(s)</th><th class="d-none d-xl-table-cell">Raw data</th></tr></thead>
+            <tbody>
+                @foreach (var e in Model.Errors)
+                {
+                    <tr>
+                        <td>@e.RowNumber</td>
+                        <td><code>@(e.LegacyReference ?? "—")</code></td>
+                        <td class="small">@e.Reason</td>
+                        <td class="small d-none d-xl-table-cell"><code class="text-muted">@e.RawData</code></td>
+                    </tr>
+                }
+                @if (Model.Errors.Count == 0)
+                {
+                    <tr><td colspan="4" class="text-center text-muted py-4">No rejected rows.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

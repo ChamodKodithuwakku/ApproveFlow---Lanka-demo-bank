@@ -1,7 +1,12 @@
 using ApproveFlow.Application.Abstractions.Auditing;
+using ApproveFlow.Application.AiRisk;
+using ApproveFlow.Infrastructure.Ai;
 using ApproveFlow.Application.Administration;
 using ApproveFlow.Application.Audit;
 using ApproveFlow.Application.Dashboard;
+using ApproveFlow.Application.DataImport;
+using ApproveFlow.Infrastructure.DataImport;
+using ApproveFlow.Application.Reports;
 using ApproveFlow.Infrastructure.Persistence.Queries;
 using ApproveFlow.Application.Abstractions.Identity;
 using ApproveFlow.Application.Abstractions.Persistence;
@@ -74,8 +79,15 @@ public static class DependencyInjection
         services.AddScoped<IAuditTrail, AuditTrail>();
         services.AddScoped<IAuditLogReader, AuditLogReader>();
         services.AddScoped<IDashboardQueries, DashboardQueries>();
+        services.AddScoped<IReportingQueries, ReportingQueries>();
+        services.AddScoped<ILegacyLoanImportService, LegacyLoanImportService>();
         services.AddScoped<IUserAdministrationService, UserAdministrationService>();
         services.AddScoped<DataSeeder>();
+
+        // AI risk summary: typed HttpClient; provider, model, endpoint and key come from configuration (key from secrets only).
+        services.AddOptions<AiRiskSummaryOptions>().BindConfiguration(AiRiskSummaryOptions.SectionName);
+        services.AddHttpClient<IAiRiskSummaryService, LlmRiskSummaryService>((sp, client) =>
+            client.Timeout = TimeSpan.FromSeconds(Math.Clamp(sp.GetRequiredService<IOptions<AiRiskSummaryOptions>>().Value.TimeoutSeconds, 5, 300)));
 
         services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>("database");
 
