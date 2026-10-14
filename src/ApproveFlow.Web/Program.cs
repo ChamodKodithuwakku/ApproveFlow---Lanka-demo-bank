@@ -1,3 +1,4 @@
+using ApproveFlow.Application;
 using ApproveFlow.Application.Common.Interfaces;
 using ApproveFlow.Infrastructure;
 using ApproveFlow.Infrastructure.Persistence;
@@ -18,6 +19,7 @@ try
 
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
+    builder.Services.AddApplication();
     builder.Services.AddInfrastructure();
     builder.Services.AddIdentityPersistence();
     builder.Services.AddControllersWithViews();
