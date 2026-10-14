@@ -1,8 +1,10 @@
 using System.Globalization;
+using System.Text.Json.Serialization;
 using ApproveFlow.Application;
 using ApproveFlow.Application.Common.Interfaces;
 using ApproveFlow.Infrastructure;
 using ApproveFlow.Infrastructure.Persistence;
+using ApproveFlow.Web.Api;
 using ApproveFlow.Web.Infrastructure;
 using ApproveFlow.Web.Security;
 using Microsoft.AspNetCore.Identity;
@@ -70,10 +72,18 @@ try
     });
 
     builder.Services.AddControllersWithViews(options =>
-    {
-        // Every unsafe (POST/PUT/DELETE) MVC request must carry a valid anti-forgery token.
-        options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
-    });
+        {
+            // Every unsafe (POST/PUT/DELETE) MVC request must carry a valid anti-forgery token.
+            // (API controllers opt out: they authenticate with bearer tokens, which browsers never send automatically.)
+            options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+        })
+        .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+    // REST API: JWT bearer authentication, RFC 7807 problem details, OpenAPI documentation.
+    builder.Services.AddApproveFlowJwt();
+    builder.Services.AddProblemDetails();
+    builder.Services.AddExceptionHandler<ApiExceptionHandler>();
+    builder.Services.AddApproveFlowSwagger();
 
     builder.Services.AddApproveFlowRateLimiting(builder.Configuration);
 
@@ -91,7 +101,14 @@ try
         app.UseHsts();
     }
 
-    app.UseStatusCodePagesWithReExecute("/Home/Status/{0}");
+    // API requests always get RFC 7807 problem details (never an HTML page or a stack trace), in every environment.
+    static bool IsApi(HttpContext context) => context.Request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase);
+    app.UseWhen(IsApi, api =>
+    {
+        api.UseExceptionHandler();
+        api.UseStatusCodePages();
+    });
+    app.UseWhen(context => !IsApi(context), ui => ui.UseStatusCodePagesWithReExecute("/Home/Status/{0}"));
     app.UseHttpsRedirection();
 
     var culture = new CultureInfo("en-GB");
@@ -103,12 +120,26 @@ try
     });
 
     app.UseStaticFiles();
+
+    // OpenAPI document + Swagger UI: on in Development, opt-in elsewhere via Swagger:Enabled.
+    if (app.Configuration.GetValue("Swagger:Enabled", app.Environment.IsDevelopment()))
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI(options =>
+        {
+            options.SwaggerEndpoint("/swagger/v1/swagger.json", "ApproveFlow API v1");
+            options.DocumentTitle = "ApproveFlow API";
+            options.EnablePersistAuthorization();
+        });
+    }
+
     app.UseSerilogRequestLogging();
     app.UseRouting();
     app.UseRateLimiter();
     app.UseAuthentication();
     app.UseAuthorization();
 
+    app.MapControllers();
     app.MapControllerRoute(name: "areas", pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
     app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
     app.MapHealthChecks("/health").AllowAnonymous();

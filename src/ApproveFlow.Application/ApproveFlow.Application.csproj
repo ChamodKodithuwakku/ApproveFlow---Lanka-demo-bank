@@ -3,6 +3,9 @@
   <!-- Application layer: use cases, DTOs, validation and the ports (interfaces) implemented by Infrastructure. -->
   <PropertyGroup>
     <RootNamespace>ApproveFlow.Application</RootNamespace>
+    <!-- DTO documentation is surfaced in the Swagger/OpenAPI document. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
