@@ -1,0 +1,121 @@
+@model AuditLogIndexViewModel
+@{
+    ViewData["Title"] = "Audit trail";
+    var f = Model.Filter;
+}
+<div class="af-page-header">
+    <div>
+        <h1 class="af-page-title">Audit trail</h1>
+        <p class="af-page-subtitle">Append-only record of every data change, sign-in event and AI request. Read-only.</p>
+    </div>
+    <a class="btn btn-outline-primary" href="@Url.Action("Export", f.RouteValues())"><i class="bi bi-filetype-csv me-1"></i>Export CSV</a>
+</div>
+
+<div class="card af-card mb-3">
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="af-filter">
+            <div>
+                <label class="form-label small" for="From">From</label>
+                <input type="date" class="form-control" id="From" name="From" value="@f.From?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div>
+                <label class="form-label small" for="To">To</label>
+                <input type="date" class="form-control" id="To" name="To" value="@f.To?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div>
+                <label class="form-label small" for="User">User</label>
+                <input class="form-control" id="User" name="User" value="@f.User" placeholder="Email or user id" />
+            </div>
+            <div>
+                <label class="form-label small" for="EventType">Event type</label>
+                <select class="form-select" id="EventType" name="EventType">
+                    <option value="">All</option>
+                    @foreach (var t in Enum.GetValues<AuditEventType>())
+                    {
+                        <option value="@t" selected="@(f.EventType == t)">@t</option>
+                    }
+                </select>
+            </div>
+            <div>
+                <label class="form-label small" for="Table">Entity (table)</label>
+                <select class="form-select" id="Table" name="Table">
+                    <option value="">All</option>
+                    @foreach (var t in Model.Tables)
+                    {
+                        <option value="@t" selected="@(f.Table == t)">@t</option>
+                    }
+                </select>
+            </div>
+            <div>
+                <label class="form-label small" for="Action">Action</label>
+                <select class="form-select" id="Action" name="Action">
+                    <option value="">All</option>
+                    @foreach (var a in Model.Actions)
+                    {
+                        <option value="@a" selected="@(f.Action == a)">@a</option>
+                    }
+                </select>
+            </div>
+            <div class="af-filter-actions">
+                <input type="hidden" name="RecordKey" value="@f.RecordKey" />
+                <button type="submit" class="btn btn-primary flex-fill" title="Apply filters"><i class="bi bi-funnel"></i><span class="visually-hidden">Filter</span></button>
+                <a asp-action="Index" class="btn btn-outline-secondary" title="Clear"><i class="bi bi-x-lg"></i><span class="visually-hidden">Clear</span></a>
+            </div>
+        </form>
+        @if (!string.IsNullOrEmpty(f.RecordKey))
+        {
+            <div class="small mt-2">Showing record <code>@f.Table #@f.RecordKey</code> only. <a asp-action="Index">Show all</a></div>
+        }
+    </div>
+</div>
+
+<div class="card af-card">
+    <div class="table-responsive">
+        <table class="table af-table mb-0 af-audit-table">
+            <thead>
+                <tr><th>When (Colombo)</th><th>Event</th><th>Entity / record</th><th>Action</th><th>User</th><th class="d-none d-lg-table-cell">IP</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.Result.Items)
+                {
+                    var detailsId = "audit-" + row.Id;
+                    <tr>
+                        <td class="text-nowrap small">@Display.Time(row.TimestampUtc)</td>
+                        <td><span class="badge af-event af-event-@row.EventType.ToString().ToLowerInvariant()">@row.EventType</span></td>
+                        <td class="small">@row.TableName @if (!string.IsNullOrEmpty(row.RecordKey)) { <code class="af-key" title="@row.RecordKey">#@row.RecordKey</code> }</td>
+                        <td class="small fw-semibold">@row.Action</td>
+                        <td class="small">@(row.UserName ?? row.UserId ?? "—")</td>
+                        <td class="small d-none d-lg-table-cell text-muted">@row.IpAddress</td>
+                        <td class="text-end">
+                            @if (row.OldValues is not null || row.NewValues is not null)
+                            {
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#@detailsId" aria-expanded="false" aria-controls="@detailsId">Details</button>
+                            }
+                        </td>
+                    </tr>
+                    @if (row.OldValues is not null || row.NewValues is not null)
+                    {
+                        <tr class="collapse af-audit-details" id="@detailsId">
+                            <td colspan="7">
+                                @if (!string.IsNullOrEmpty(row.ChangedColumns))
+                                {
+                                    <div class="small mb-2"><strong>Changed columns:</strong> @row.ChangedColumns</div>
+                                }
+                                <div class="row g-2">
+                                    <div class="col-md-6"><div class="small text-muted mb-1">Old values</div><pre class="af-json">@(row.OldValues ?? "—")</pre></div>
+                                    <div class="col-md-6"><div class="small text-muted mb-1">New values</div><pre class="af-json">@(row.NewValues ?? "—")</pre></div>
+                                </div>
+                                <div class="small text-muted mt-1">Correlation id: <code>@row.CorrelationId</code> · User id: <code>@row.UserId</code></div>
+                            </td>
+                        </tr>
+                    }
+                }
+                @if (Model.Result.Items.Count == 0)
+                {
+                    <tr><td colspan="7" class="text-center text-muted py-5">No audit records match the filters.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<partial name="_Pager" model='new PagerModel(Model.Result.Page, Model.Result.TotalPages, Model.Result.TotalCount, p => Url.Action("Index", f.RouteValues(p)))' />

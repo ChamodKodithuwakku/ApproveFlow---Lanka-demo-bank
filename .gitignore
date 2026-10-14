@@ -494,3 +494,6 @@ logs/
 *.db-wal
 # Local scratch notes
 New Text Document.txt
+
+# Local Claude Code preview configuration
+.claude/

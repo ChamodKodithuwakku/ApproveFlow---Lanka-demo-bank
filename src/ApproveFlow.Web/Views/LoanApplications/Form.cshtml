@@ -1,0 +1,157 @@
+@model LoanApplicationFormViewModel
+@{
+    ViewData["Title"] = Model.IsEdit ? $"Edit {Model.ReferenceNumber}" : "New loan application";
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+}
+
+<nav aria-label="breadcrumb" class="mb-2">
+    <ol class="breadcrumb small mb-0">
+        <li class="breadcrumb-item"><a asp-action="Index">Loan applications</a></li>
+        @if (Model.IsEdit)
+        {
+            <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">@Model.ReferenceNumber</a></li>
+        }
+        <li class="breadcrumb-item active" aria-current="page">@(Model.IsEdit ? "Edit" : "New")</li>
+    </ol>
+</nav>
+
+<div class="af-page-header">
+    <div>
+        <h1 class="af-page-title">@ViewData["Title"]</h1>
+        <p class="af-page-subtitle">Saved as a <strong>Draft</strong>. Amount and tenure must be within the selected product's limits.</p>
+    </div>
+</div>
+
+<form asp-action="@(Model.IsEdit ? "Edit" : "Create")" asp-route-id="@Model.Id" method="post" id="loanForm" novalidate>
+    <input type="hidden" asp-for="RowVersion" />
+    <div class="row g-3">
+        <div class="col-xl-8">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="card af-card mb-3">
+                <div class="card-header af-card-header"><h2 class="af-card-title">Applicant and product</h2></div>
+                <div class="card-body row g-3">
+                    <div class="col-md-7">
+                        <label asp-for="CustomerId" class="form-label"></label>
+                        <select asp-for="CustomerId" class="form-select">
+                            <option value="">Select a customer…</option>
+                            @foreach (var c in Model.Customers)
+                            {
+                                <option value="@c.Id">@c.FullName — @c.CustomerNumber · @c.BranchName</option>
+                            }
+                        </select>
+                        <span asp-validation-for="CustomerId" class="invalid-feedback d-block"></span>
+                        <div class="form-text">Not listed? <a asp-controller="Customers" asp-action="Create">Register a new customer</a>. The application is booked to the customer's home branch.</div>
+                    </div>
+                    <div class="col-md-5">
+                        <label asp-for="LoanProductId" class="form-label"></label>
+                        <select asp-for="LoanProductId" class="form-select" id="LoanProductId">
+                            <option value="">Select a product…</option>
+                            @foreach (var p in Model.Products)
+                            {
+                                <option value="@p.Id"
+                                        data-min-amount="@p.MinAmount.ToString(inv)" data-max-amount="@p.MaxAmount.ToString(inv)"
+                                        data-min-tenure="@p.MinTenureMonths" data-max-tenure="@p.MaxTenureMonths"
+                                        data-rate="@p.DefaultInterestRate.ToString(inv)">@p.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="LoanProductId" class="invalid-feedback d-block"></span>
+                        <div class="form-text" id="productLimits"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card af-card mb-3">
+                <div class="card-header af-card-header"><h2 class="af-card-title">Loan terms</h2></div>
+                <div class="card-body row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="Amount" class="form-label"></label>
+                        <input asp-for="Amount" class="form-control text-end" type="number" step="0.01" min="1" inputmode="decimal" />
+                        <span asp-validation-for="Amount" class="invalid-feedback d-block"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="TenureMonths" class="form-label"></label>
+                        <input asp-for="TenureMonths" class="form-control text-end" type="number" step="1" min="1" max="360" inputmode="numeric" />
+                        <span asp-validation-for="TenureMonths" class="invalid-feedback d-block"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="InterestRate" class="form-label"></label>
+                        <input asp-for="InterestRate" class="form-control text-end" type="number" step="0.01" min="0" max="100" inputmode="decimal" />
+                        <span asp-validation-for="InterestRate" class="invalid-feedback d-block"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Purpose" class="form-label"></label>
+                        <textarea asp-for="Purpose" class="form-control" rows="3" maxlength="500"></textarea>
+                        <span asp-validation-for="Purpose" class="invalid-feedback d-block"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card af-card mb-3">
+                <div class="card-header af-card-header"><h2 class="af-card-title">Repayment capacity</h2></div>
+                <div class="card-body row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="MonthlyIncome" class="form-label"></label>
+                        <input asp-for="MonthlyIncome" class="form-control text-end" type="number" step="0.01" min="1" inputmode="decimal" />
+                        <span asp-validation-for="MonthlyIncome" class="invalid-feedback d-block"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ExistingObligations" class="form-label"></label>
+                        <input asp-for="ExistingObligations" class="form-control text-end" type="number" step="0.01" min="0" inputmode="decimal" />
+                        <span asp-validation-for="ExistingObligations" class="invalid-feedback d-block"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>@(Model.IsEdit ? "Save changes" : "Save draft")</button>
+                @if (Model.IsEdit)
+                {
+                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancel</a>
+                }
+                else
+                {
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                }
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="card af-card af-calc sticky-xl-top" aria-live="polite">
+                <div class="card-header af-card-header">
+                    <div>
+                        <h2 class="af-card-title"><i class="bi bi-calculator me-1"></i>Live affordability</h2>
+                        <p class="af-card-subtitle">Recalculated by the server on save</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="af-calc-row">
+                        <span>Monthly instalment (EMI)</span>
+                        <strong id="calcEmi">—</strong>
+                    </div>
+                    <div class="af-calc-row">
+                        <span>Total repayable</span>
+                        <strong id="calcTotal">—</strong>
+                    </div>
+                    <div class="af-calc-row">
+                        <span>Total interest</span>
+                        <strong id="calcInterest">—</strong>
+                    </div>
+                    <hr />
+                    <div class="af-calc-row">
+                        <span>Debt-burden ratio</span>
+                        <strong id="calcDbr">—</strong>
+                    </div>
+                    <div class="af-meter" aria-hidden="true"><div class="af-meter-fill" id="calcDbrBar"></div></div>
+                    <div class="af-meter-scale"><span>0%</span><span>40%</span><span>60%</span><span>100%</span></div>
+                    <p class="small mt-3 mb-0" id="calcDbrNote">Enter amount, tenure, rate and income to see the ratio.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/loan-form.js" asp-append-version="true"></script>
+}

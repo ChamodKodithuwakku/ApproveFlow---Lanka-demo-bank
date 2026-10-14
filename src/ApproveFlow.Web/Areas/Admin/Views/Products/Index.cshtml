@@ -1,0 +1,29 @@
+@model IReadOnlyList<ProductDto>
+@{
+    ViewData["Title"] = "Loan products";
+}
+<div class="af-page-header">
+    <div><h1 class="af-page-title">Loan products</h1><p class="af-page-subtitle">Amount and tenure limits are enforced on every application.</p></div>
+    <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>New product</a>
+</div>
+<div class="card af-card">
+    <div class="table-responsive">
+        <table class="table af-table table-hover mb-0">
+            <thead><tr><th>Code</th><th>Name</th><th class="text-end">Amount range (LKR)</th><th class="text-end">Tenure (months)</th><th class="text-end">Default rate</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var p in Model)
+                {
+                    <tr>
+                        <td><span class="af-ref">@p.Code</span></td>
+                        <td>@p.Name<div class="small text-muted">@p.Description</div></td>
+                        <td class="text-end text-nowrap">@Display.Number(p.MinAmount, 0) – @Display.Number(p.MaxAmount, 0)</td>
+                        <td class="text-end">@p.MinTenureMonths – @p.MaxTenureMonths</td>
+                        <td class="text-end">@Display.Percent(p.DefaultInterestRate)</td>
+                        <td>@if (p.IsActive) { <span class="badge text-bg-success">Active</span> } else { <span class="badge text-bg-secondary">Withdrawn</span> }</td>
+                        <td class="text-end"><a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i><span class="visually-hidden">Edit</span></a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

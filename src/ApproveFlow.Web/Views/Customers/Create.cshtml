@@ -1,0 +1,67 @@
+@model CustomerFormViewModel
+@{
+    ViewData["Title"] = "New customer";
+}
+<nav aria-label="breadcrumb" class="mb-2">
+    <ol class="breadcrumb small mb-0">
+        <li class="breadcrumb-item"><a asp-action="Index">Customers</a></li>
+        <li class="breadcrumb-item active" aria-current="page">New</li>
+    </ol>
+</nav>
+<div class="af-page-header"><h1 class="af-page-title">New customer</h1></div>
+
+<div class="card af-card">
+    <div class="card-body">
+        <form asp-action="Create" method="post" novalidate class="row g-3">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger col-12"></div>
+            <div class="col-md-6">
+                <label asp-for="FullName" class="form-label"></label>
+                <input asp-for="FullName" class="form-control" autocomplete="off" />
+                <span asp-validation-for="FullName" class="invalid-feedback d-block"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="Nic" class="form-label"></label>
+                <input asp-for="Nic" class="form-control" autocomplete="off" placeholder="199012345678" />
+                <span asp-validation-for="Nic" class="invalid-feedback d-block"></span>
+            </div>
+            <div class="col-md-3">
+                <label asp-for="DateOfBirth" class="form-label"></label>
+                <input asp-for="DateOfBirth" class="form-control" type="date" />
+                <span asp-validation-for="DateOfBirth" class="invalid-feedback d-block"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="BranchId" class="form-label"></label>
+                <select asp-for="BranchId" class="form-select">
+                    <option value="">Select…</option>
+                    @foreach (var b in Model.Branches)
+                    {
+                        <option value="@b.Id">@b.Name</option>
+                    }
+                </select>
+                <span asp-validation-for="BranchId" class="invalid-feedback d-block"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Phone" class="form-label"></label>
+                <input asp-for="Phone" class="form-control" />
+                <span asp-validation-for="Phone" class="invalid-feedback d-block"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="invalid-feedback d-block"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Address" class="form-label"></label>
+                <input asp-for="Address" class="form-control" />
+                <span asp-validation-for="Address" class="invalid-feedback d-block"></span>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Create customer</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

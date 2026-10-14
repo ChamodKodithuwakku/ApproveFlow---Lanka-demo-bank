@@ -1,4 +1,9 @@
+using ApproveFlow.Application.Administration;
+using ApproveFlow.Application.Audit;
+using ApproveFlow.Application.Customers;
+using ApproveFlow.Application.Dashboard;
 using ApproveFlow.Application.LoanApplications;
+using ApproveFlow.Application.Lookups;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -14,6 +19,11 @@ public static class DependencyInjection
 
         services.AddScoped<ILoanApplicationService, LoanApplicationService>();
         services.AddScoped<ILoanWorkflowService, LoanWorkflowService>();
+        services.AddScoped<ILookupService, LookupService>();
+        services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<IAuditLogService, AuditLogService>();
+        services.AddScoped<ICustomerService, CustomerService>();
+        services.AddScoped<IReferenceDataAdminService, ReferenceDataAdminService>();
 
         return services;
     }

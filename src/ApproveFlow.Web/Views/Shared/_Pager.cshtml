@@ -1,0 +1,28 @@
+@model PagerModel
+@if (Model.TotalPages > 1)
+{
+    var start = Math.Max(1, Model.Page - 2);
+    var end = Math.Min(Model.TotalPages, start + 4);
+    start = Math.Max(1, end - 4);
+    <nav aria-label="Pagination" class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3">
+        <span class="text-muted small">Page @Model.Page of @Model.TotalPages · @Model.TotalCount record(s)</span>
+        <ul class="pagination pagination-sm mb-0">
+            <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
+                <a class="page-link" href="@Model.UrlFor(Model.Page - 1)" aria-label="Previous"><i class="bi bi-chevron-left"></i></a>
+            </li>
+            @for (var p = start; p <= end; p++)
+            {
+                <li class="page-item @(p == Model.Page ? "active" : "")" aria-current="@(p == Model.Page ? "page" : null)">
+                    <a class="page-link" href="@Model.UrlFor(p)">@p</a>
+                </li>
+            }
+            <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
+                <a class="page-link" href="@Model.UrlFor(Model.Page + 1)" aria-label="Next"><i class="bi bi-chevron-right"></i></a>
+            </li>
+        </ul>
+    </nav>
+}
+else if (Model.TotalCount > 0)
+{
+    <div class="text-muted small mt-3">@Model.TotalCount record(s)</div>
+}

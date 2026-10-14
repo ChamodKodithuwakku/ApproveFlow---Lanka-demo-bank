@@ -1,0 +1,54 @@
+@model LoginViewModel
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Environment
+@{
+    ViewData["Title"] = "Sign in";
+    Layout = "_AuthLayout";
+}
+<h2 class="af-auth-title">Sign in</h2>
+<p class="text-muted mb-4">Use your bank staff account.</p>
+
+<form asp-action="Login" method="post" novalidate>
+    <input type="hidden" asp-for="ReturnUrl" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small" role="alert"></div>
+
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+            <input asp-for="Email" class="form-control" autocomplete="username" autofocus placeholder="name@demo.lk" />
+        </div>
+        <span asp-validation-for="Email" class="invalid-feedback d-block"></span>
+    </div>
+    <div class="mb-4">
+        <label asp-for="Password" class="form-label"></label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+            <input asp-for="Password" class="form-control" autocomplete="current-password" />
+        </div>
+        <span asp-validation-for="Password" class="invalid-feedback d-block"></span>
+    </div>
+    <button type="submit" class="btn btn-primary w-100 py-2"><i class="bi bi-box-arrow-in-right me-2"></i>Sign in</button>
+</form>
+
+<div class="af-auth-security small text-muted mt-4">
+    <i class="bi bi-shield-check me-1"></i>Accounts lock for 15 minutes after 5 failed attempts. All sign-ins are audited.
+</div>
+
+@if (Environment.IsDevelopment())
+{
+    <details class="af-demo-accounts mt-3">
+        <summary>Demo accounts (Development only)</summary>
+        <ul class="list-unstyled small mb-0 mt-2">
+            <li><code>admin@demo.lk</code> — Admin</li>
+            <li><code>maker1@demo.lk</code>, <code>maker2@demo.lk</code> — Maker</li>
+            <li><code>checker1@demo.lk</code> — Checker (limit LKR 2,000,000)</li>
+            <li><code>checker2@demo.lk</code> — Checker (limit LKR 10,000,000)</li>
+            <li><code>auditor@demo.lk</code> — Auditor</li>
+        </ul>
+        <p class="small text-muted mb-0 mt-2">Password: the value of <code>Seed:DemoPassword</code> (see README).</p>
+    </details>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

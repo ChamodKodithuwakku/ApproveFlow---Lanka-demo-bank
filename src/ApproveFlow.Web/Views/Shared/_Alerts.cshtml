@@ -1,0 +1,26 @@
+@{
+    var success = TempData[AppController.SuccessKey] as string;
+    var error = TempData[AppController.ErrorKey] as string;
+    var info = TempData[AppController.InfoKey] as string;
+}
+@if (!string.IsNullOrEmpty(success))
+{
+    <div class="alert alert-success alert-dismissible fade show af-alert" role="status">
+        <i class="bi bi-check-circle-fill me-2"></i>@success
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger alert-dismissible fade show af-alert" role="alert">
+        <i class="bi bi-exclamation-octagon-fill me-2"></i>@error
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (!string.IsNullOrEmpty(info))
+{
+    <div class="alert alert-info alert-dismissible fade show af-alert" role="status">
+        <i class="bi bi-info-circle-fill me-2"></i>@info
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}

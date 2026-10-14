@@ -1,4 +1,8 @@
 using ApproveFlow.Application.Abstractions.Auditing;
+using ApproveFlow.Application.Administration;
+using ApproveFlow.Application.Audit;
+using ApproveFlow.Application.Dashboard;
+using ApproveFlow.Infrastructure.Persistence.Queries;
 using ApproveFlow.Application.Abstractions.Identity;
 using ApproveFlow.Application.Abstractions.Persistence;
 using ApproveFlow.Infrastructure.Auditing;
@@ -68,6 +72,9 @@ public static class DependencyInjection
         services.AddScoped<IReferenceNumberGenerator, ReferenceNumberGenerator>();
         services.AddScoped<IUserDirectory, UserDirectory>();
         services.AddScoped<IAuditTrail, AuditTrail>();
+        services.AddScoped<IAuditLogReader, AuditLogReader>();
+        services.AddScoped<IDashboardQueries, DashboardQueries>();
+        services.AddScoped<IUserAdministrationService, UserAdministrationService>();
         services.AddScoped<DataSeeder>();
 
         services.AddHealthChecks().AddDbContextCheck<ApplicationDbContext>("database");

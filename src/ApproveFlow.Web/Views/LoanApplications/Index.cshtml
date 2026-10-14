@@ -1,0 +1,172 @@
+@model LoanApplicationListViewModel
+@{
+    ViewData["Title"] = Model.IsQueue ? "Approval queue" : "Loan applications";
+    var f = Model.Filter;
+    var action = Model.IsQueue ? "Queue" : "Index";
+    var statuses = Model.IsQueue
+        ? new[] { LoanStatus.Submitted, LoanStatus.PendingSecondApproval }
+        : Enum.GetValues<LoanStatus>();
+
+    string SortLink(string field) => Url.Action(action, f.RouteValues(sort: field))!;
+    string SortIcon(string field) => !string.Equals(f.Sort, field, StringComparison.OrdinalIgnoreCase)
+        ? "bi-arrow-down-up text-muted"
+        : f.Direction == ApproveFlow.Application.Common.Models.SortDirection.Ascending ? "bi-sort-up" : "bi-sort-down";
+}
+
+<div class="af-page-header">
+    <div>
+        <h1 class="af-page-title">@ViewData["Title"]</h1>
+        <p class="af-page-subtitle">
+            @if (Model.IsQueue)
+            {
+                <text>Oldest first. Your approval limit: <strong>@Display.Money(Model.ApprovalLimit)</strong>. Items above it need a second checker.</text>
+            }
+            else
+            {
+                <text>Search, filter and open any application. Amounts in LKR.</text>
+            }
+        </p>
+    </div>
+    @if (User.IsInRole(AppRoles.Maker) && !Model.IsQueue)
+    {
+        <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>New application</a>
+    }
+</div>
+
+<div class="card af-card mb-3">
+    <div class="card-body">
+        <form method="get" asp-action="@action" class="af-filter">
+            <div class="af-filter-wide">
+                <label class="form-label small" for="Search">Search</label>
+                <input class="form-control" id="Search" name="Search" value="@f.Search" placeholder="Reference, customer or NIC" />
+            </div>
+            <div>
+                <label class="form-label small" for="Status">Status</label>
+                <select class="form-select" id="Status" name="Status">
+                    <option value="">All</option>
+                    @foreach (var s in statuses)
+                    {
+                        <option value="@s" selected="@(f.Status == s)">@Display.StatusLabel(s)</option>
+                    }
+                </select>
+            </div>
+            <div>
+                <label class="form-label small" for="BranchId">Branch</label>
+                <select class="form-select" id="BranchId" name="BranchId">
+                    <option value="">All</option>
+                    @foreach (var b in Model.Branches)
+                    {
+                        <option value="@b.Id" selected="@(f.BranchId == b.Id)">@b.Name</option>
+                    }
+                </select>
+            </div>
+            <div>
+                <label class="form-label small" for="ProductId">Product</label>
+                <select class="form-select" id="ProductId" name="ProductId">
+                    <option value="">All</option>
+                    @foreach (var p in Model.Products)
+                    {
+                        <option value="@p.Id" selected="@(f.ProductId == p.Id)">@p.Name</option>
+                    }
+                </select>
+            </div>
+            <div>
+                <label class="form-label small" for="From">From</label>
+                <input type="date" class="form-control" id="From" name="From" value="@f.From?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div>
+                <label class="form-label small" for="To">To</label>
+                <input type="date" class="form-control" id="To" name="To" value="@f.To?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="af-filter-actions">
+                <button type="submit" class="btn btn-primary flex-fill" title="Apply filters"><i class="bi bi-funnel"></i><span class="visually-hidden">Filter</span></button>
+                <a asp-action="@action" class="btn btn-outline-secondary" title="Clear filters"><i class="bi bi-x-lg"></i><span class="visually-hidden">Clear</span></a>
+            </div>
+            @if (User.IsInRole(AppRoles.Maker) && !Model.IsQueue)
+            {
+                <div class="af-filter-full">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="Mine" name="Mine" value="true" checked="@f.Mine" data-autosubmit />
+                        <label class="form-check-label small" for="Mine">Only applications I created</label>
+                    </div>
+                </div>
+            }
+        </form>
+    </div>
+</div>
+
+<div class="card af-card">
+    <div class="table-responsive">
+        <table class="table af-table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th><a href="@SortLink(LoanApplicationSortFields.Reference)">Reference <i class="bi @SortIcon(LoanApplicationSortFields.Reference)"></i></a></th>
+                    <th><a href="@SortLink(LoanApplicationSortFields.Customer)">Customer <i class="bi @SortIcon(LoanApplicationSortFields.Customer)"></i></a></th>
+                    <th class="d-none d-xxl-table-cell">Product</th>
+                    <th class="d-none d-xl-table-cell">Branch</th>
+                    <th class="text-end"><a href="@SortLink(LoanApplicationSortFields.Amount)">Amount <i class="bi @SortIcon(LoanApplicationSortFields.Amount)"></i></a></th>
+                    <th class="text-end d-none d-md-table-cell">DBR</th>
+                    <th><a href="@SortLink(LoanApplicationSortFields.Status)">Status <i class="bi @SortIcon(LoanApplicationSortFields.Status)"></i></a></th>
+                    @if (Model.IsQueue)
+                    {
+                        <th><a href="@SortLink(LoanApplicationSortFields.Submitted)">Age <i class="bi @SortIcon(LoanApplicationSortFields.Submitted)"></i></a></th>
+                    }
+                    else
+                    {
+                        <th class="d-none d-md-table-cell"><a href="@SortLink(LoanApplicationSortFields.Created)">Created <i class="bi @SortIcon(LoanApplicationSortFields.Created)"></i></a></th>
+                    }
+                    <th class="d-none d-lg-table-cell">Maker</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var a in Model.Result.Items)
+                {
+                    var isMine = a.CreatedById == Model.CurrentUserId;
+                    <tr>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@a.Id" class="af-ref">@a.ReferenceNumber</a>
+                            @if (a.IsImported)
+                            {
+                                <span class="badge text-bg-light border ms-1" title="Migrated from the legacy system">Legacy</span>
+                            }
+                        </td>
+                        <td class="text-nowrap">@a.CustomerName</td>
+                        <td class="d-none d-xxl-table-cell">@a.ProductName</td>
+                        <td class="d-none d-xl-table-cell text-nowrap">@a.BranchName</td>
+                        <td class="text-end text-nowrap">
+                            @Display.Number(a.Amount)
+                            @if (Model.IsQueue && a.Status == LoanStatus.Submitted && a.Amount > (Model.ApprovalLimit ?? 0))
+                            {
+                                <i class="bi bi-people-fill text-purple ms-1" title="Above your limit: dual approval required"></i>
+                            }
+                        </td>
+                        <td class="text-end d-none d-md-table-cell"><span class="@Display.DbrCss(a.DebtBurdenRatio)">@Display.Percent(a.DebtBurdenRatio)</span></td>
+                        <td><partial name="_StatusBadge" model="a.Status" /></td>
+                        @if (Model.IsQueue)
+                        {
+                            var age = Display.AgeDays(a.SubmittedAtUtc, Model.NowUtc);
+                            <td class="text-nowrap"><span class="af-age @Display.AgeCss(age)">@age d</span></td>
+                        }
+                        else
+                        {
+                            <td class="text-nowrap text-muted small d-none d-md-table-cell">@Display.Date(a.CreatedAtUtc)</td>
+                        }
+                        <td class="d-none d-lg-table-cell small">
+                            @a.CreatedByName
+                            @if (Model.IsQueue && (isMine || a.FirstApproverId == Model.CurrentUserId))
+                            {
+                                <span class="badge text-bg-warning ms-1" title="Four-eyes / dual control: you cannot decide on this item">You cannot decide</span>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (Model.Result.Items.Count == 0)
+                {
+                    <tr><td colspan="9" class="text-center text-muted py-5"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No applications match the current filters.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<partial name="_Pager" model="new PagerModel(Model.Result.Page, Model.Result.TotalPages, Model.Result.TotalCount, p => Url.Action(action, f.RouteValues(page: p)))" />

@@ -1,0 +1,32 @@
+@model LoanApplicationDetailsDto
+<div class="card af-card mt-3 af-ai-card" id="riskSummaryCard" data-url="@Url.Action("RiskSummary", "LoanApplications", new { id = Model.Id })">
+    @Html.AntiForgeryToken()
+    <div class="card-header af-card-header">
+        <div>
+            <h2 class="af-card-title"><i class="bi bi-stars me-1"></i>AI risk summary</h2>
+            <p class="af-card-subtitle">Advisory analysis of anonymised loan figures</p>
+        </div>
+        <button type="button" class="btn btn-outline-primary btn-sm" id="riskSummaryButton">
+            <span class="spinner-border spinner-border-sm me-1 d-none" id="riskSummarySpinner" aria-hidden="true"></span>
+            <i class="bi bi-magic me-1" id="riskSummaryIcon"></i>Generate AI Risk Summary
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="af-ai-disclaimer" role="note">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i><strong>AI-generated – advisory only, final decision rests with the Checker.</strong>
+        </div>
+        <p class="text-muted small mb-0" id="riskSummaryPlaceholder">
+            Only non-identifying fields (product, amount, tenure, rate, income, obligations, EMI and ratios) are analysed.
+            Name, NIC, phone and address are never sent. Each request is recorded in the audit trail.
+        </p>
+        <div class="alert alert-danger d-none mt-3 mb-0" id="riskSummaryError" role="alert"></div>
+        <div class="d-none mt-3" id="riskSummaryResult">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                <span class="af-risk" id="riskSummaryLevel"></span>
+                <span class="small text-muted" id="riskSummarySource"></span>
+            </div>
+            <p class="mb-2" id="riskSummaryText"></p>
+            <ul class="af-risk-factors mb-0" id="riskSummaryFactors"></ul>
+        </div>
+    </div>
+</div>

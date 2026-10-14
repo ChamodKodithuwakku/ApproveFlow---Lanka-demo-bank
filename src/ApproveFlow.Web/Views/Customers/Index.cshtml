@@ -1,0 +1,56 @@
+@model ApproveFlow.Application.Common.Models.PagedResult<ApproveFlow.Application.Customers.CustomerListItemDto>
+@{
+    ViewData["Title"] = "Customers";
+    var search = ViewData["Search"] as string;
+}
+<div class="af-page-header">
+    <div>
+        <h1 class="af-page-title">Customers</h1>
+        <p class="af-page-subtitle">Fictional customer master data. NICs are masked in lists.</p>
+    </div>
+    @if (User.IsInRole(AppRoles.Maker) || User.IsInRole(AppRoles.Admin))
+    {
+        <a asp-action="Create" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>New customer</a>
+    }
+</div>
+
+<div class="card af-card mb-3">
+    <div class="card-body">
+        <form method="get" asp-action="Index" class="row g-2">
+            <div class="col-md-6 col-lg-4">
+                <label for="search" class="visually-hidden">Search</label>
+                <input class="form-control" id="search" name="search" value="@search" placeholder="Name, NIC or customer number" />
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-primary" type="submit"><i class="bi bi-search me-1"></i>Search</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card af-card">
+    <div class="table-responsive">
+        <table class="table af-table table-hover mb-0">
+            <thead><tr><th>Customer no.</th><th>Name</th><th>NIC</th><th>Home branch</th><th class="d-none d-md-table-cell">Phone</th><th class="d-none d-lg-table-cell">Registered</th></tr></thead>
+            <tbody>
+                @foreach (var c in Model.Items)
+                {
+                    <tr>
+                        <td><span class="af-ref">@c.CustomerNumber</span></td>
+                        <td>@c.FullName @if (!c.IsActive) { <span class="badge text-bg-secondary ms-1">Inactive</span> }</td>
+                        <td><code>@Display.Mask(c.Nic)</code></td>
+                        <td>@c.BranchName</td>
+                        <td class="d-none d-md-table-cell">@c.Phone</td>
+                        <td class="d-none d-lg-table-cell text-muted small">@Display.Date(c.CreatedAtUtc)</td>
+                    </tr>
+                }
+                @if (Model.Items.Count == 0)
+                {
+                    <tr><td colspan="6" class="text-center text-muted py-5">No customers found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<partial name="_Pager" model='new PagerModel(Model.Page, Model.TotalPages, Model.TotalCount, p => Url.Action("Index", new { search, page = p }))' />

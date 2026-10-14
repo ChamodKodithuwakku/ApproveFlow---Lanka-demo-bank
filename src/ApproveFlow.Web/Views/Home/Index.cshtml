@@ -1,8 +1,178 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@model ApproveFlow.Application.Dashboard.DashboardDto
+@inject TimeProvider Clock
+@{
+    ViewData["Title"] = "Dashboard";
+    var nowLocal = ApproveFlow.Application.Common.Time.ColomboTime.FromUtc(Clock.GetUtcNow().UtcDateTime);
+    var greeting = nowLocal.Hour < 12 ? "Good morning" : nowLocal.Hour < 17 ? "Good afternoon" : "Good evening";
+    var firstName = (User.FindFirst(AppClaimTypes.FullName)?.Value ?? "").Split(' ').FirstOrDefault();
+    var c = Model.Counts;
+    var isMaker = User.IsInRole(AppRoles.Maker);
+    var isChecker = User.IsInRole(AppRoles.Checker);
+    var total = c.ByStatus.Values.Sum();
+    var agingJson = System.Text.Json.JsonSerializer.Serialize(new
+    {
+        labels = Model.Aging.Select(a => a.AgeBucket),
+        counts = Model.Aging.Select(a => a.ApplicationCount),
+        amounts = Model.Aging.Select(a => a.TotalAmount),
+    });
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="af-page-header">
+    <div>
+        <h1 class="af-page-title">@greeting@(string.IsNullOrEmpty(firstName) ? "" : ", " + firstName)</h1>
+        <p class="af-page-subtitle">@nowLocal.ToString("dddd, dd MMMM yyyy", System.Globalization.CultureInfo.InvariantCulture) · Asia/Colombo</p>
+    </div>
+    <div class="d-flex gap-2">
+        @if (isMaker)
+        {
+            <a asp-controller="LoanApplications" asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>New application</a>
+        }
+        @if (isChecker)
+        {
+            <a asp-controller="LoanApplications" asp-action="Queue" class="btn btn-primary"><i class="bi bi-inbox me-1"></i>Open approval queue</a>
+        }
+    </div>
 </div>
+
+<div class="row g-3 mb-4">
+    @if (isMaker)
+    {
+        <div class="col-sm-6 col-xl-3">
+            <a class="af-stat af-stat-slate" asp-controller="LoanApplications" asp-action="Index" asp-route-Status="Draft" asp-route-Mine="true">
+                <span class="af-stat-icon"><i class="bi bi-pencil-square"></i></span>
+                <span class="af-stat-value">@c.MyDrafts</span><span class="af-stat-label">My drafts</span>
+            </a>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <a class="af-stat af-stat-amber" asp-controller="LoanApplications" asp-action="Index" asp-route-Status="ReturnedForCorrection" asp-route-Mine="true">
+                <span class="af-stat-icon"><i class="bi bi-arrow-return-left"></i></span>
+                <span class="af-stat-value">@c.MyReturned</span><span class="af-stat-label">Returned to me for correction</span>
+            </a>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <a class="af-stat af-stat-blue" asp-controller="LoanApplications" asp-action="Index" asp-route-Mine="true" asp-route-Status="Submitted">
+                <span class="af-stat-icon"><i class="bi bi-hourglass-split"></i></span>
+                <span class="af-stat-value">@c.MyPendingDecision</span><span class="af-stat-label">My applications awaiting decision</span>
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="col-sm-6 col-xl-3">
+            <a class="af-stat af-stat-blue" asp-controller="LoanApplications" asp-action="@(isChecker ? "Queue" : "Index")" asp-route-Status="@(isChecker ? null : "Submitted")">
+                <span class="af-stat-icon"><i class="bi bi-inbox"></i></span>
+                <span class="af-stat-value">@c.PendingApprovals</span><span class="af-stat-label">Pending approvals</span>
+            </a>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <a class="af-stat af-stat-purple" asp-controller="LoanApplications" asp-action="Index" asp-route-Status="PendingSecondApproval">
+                <span class="af-stat-icon"><i class="bi bi-people"></i></span>
+                <span class="af-stat-value">@c.AwaitingSecondApproval</span><span class="af-stat-label">Awaiting second approval</span>
+            </a>
+        </div>
+    }
+    <div class="col-sm-6 col-xl-3">
+        <div class="af-stat af-stat-green">
+            <span class="af-stat-icon"><i class="bi bi-check2-circle"></i></span>
+            <span class="af-stat-value">@c.ApprovedToday</span>
+            <span class="af-stat-label">Approved today · @Display.Money(c.ApprovedTodayAmount)</span>
+        </div>
+    </div>
+    @if (!isMaker)
+    {
+        <div class="col-sm-6 col-xl-3">
+            <div class="af-stat af-stat-red">
+                <span class="af-stat-icon"><i class="bi bi-x-octagon"></i></span>
+                <span class="af-stat-value">@c.RejectedToday</span><span class="af-stat-label">Rejected today</span>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-7">
+        <div class="card af-card h-100">
+            <div class="card-header af-card-header">
+                <div>
+                    <h2 class="af-card-title">Pending approvals by age</h2>
+                    <p class="af-card-subtitle">Days since submission · source: vw_PendingApprovalsAging</p>
+                </div>
+                <span class="badge text-bg-light">@Model.Aging.Sum(a => a.ApplicationCount) pending</span>
+            </div>
+            <div class="card-body">
+                <div class="af-chart-box"><canvas id="agingChart" aria-label="Bar chart of pending applications by age bucket" role="img"></canvas></div>
+                <script type="application/json" id="agingData">@Html.Raw(agingJson)</script>
+                <div class="row text-center mt-3 g-2">
+                    @foreach (var bucket in Model.Aging)
+                    {
+                        <div class="col-4">
+                            <div class="af-mini-stat">
+                                <div class="af-mini-label">@bucket.AgeBucket</div>
+                                <div class="af-mini-value">@bucket.ApplicationCount</div>
+                                <div class="af-mini-sub">@Display.Money(bucket.TotalAmount)</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card af-card h-100">
+            <div class="card-header af-card-header">
+                <div>
+                    <h2 class="af-card-title">Portfolio by status</h2>
+                    <p class="af-card-subtitle">All applications (@total)</p>
+                </div>
+            </div>
+            <ul class="list-group list-group-flush">
+                @foreach (var status in Enum.GetValues<LoanStatus>())
+                {
+                    var count = c.ByStatus.TryGetValue(status, out var n) ? n : 0;
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <a asp-controller="LoanApplications" asp-action="Index" asp-route-Status="@status" class="text-decoration-none">
+                            <partial name="_StatusBadge" model="status" />
+                        </a>
+                        <span class="fw-semibold">@count</span>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="card af-card">
+    <div class="card-header af-card-header">
+        <div>
+            <h2 class="af-card-title">Recent activity</h2>
+            <p class="af-card-subtitle">Latest workflow actions across the bank</p>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table af-table mb-0">
+            <thead>
+                <tr><th>When</th><th>Reference</th><th>Action</th><th>By</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var a in Model.RecentActivity)
+                {
+                    <tr>
+                        <td class="text-nowrap text-muted small">@Display.Time(a.PerformedAtUtc)</td>
+                        <td><a asp-controller="LoanApplications" asp-action="Details" asp-route-id="@a.LoanApplicationId" class="af-ref">@a.ReferenceNumber</a></td>
+                        <td>@Display.ActionLabel(a.ActionType)</td>
+                        <td>@a.PerformedByName</td>
+                    </tr>
+                }
+                @if (Model.RecentActivity.Count == 0)
+                {
+                    <tr><td colspan="4" class="text-center text-muted py-4">No activity yet.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/chart.js/chart.umd.min.js"></script>
+    <script src="~/js/dashboard.js" asp-append-version="true"></script>
+}

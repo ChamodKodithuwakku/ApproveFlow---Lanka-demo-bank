@@ -1,0 +1,60 @@
+@model IReadOnlyList<UserListItemDto>
+@{
+    ViewData["Title"] = "Users & approval limits";
+}
+<div class="af-page-header">
+    <div>
+        <h1 class="af-page-title">Users &amp; approval limits</h1>
+        <p class="af-page-subtitle">Segregation of duties is enforced: a user cannot be both Maker and Checker, and Auditors hold no other role.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>New user</a>
+</div>
+
+<div class="card af-card">
+    <div class="table-responsive">
+        <table class="table af-table table-hover mb-0">
+            <thead><tr><th>Name</th><th>Email</th><th>Roles</th><th>Branch</th><th class="text-end">Approval limit</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var u in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@u.FullName</td>
+                        <td class="small">@u.Email</td>
+                        <td>
+                            @foreach (var r in u.Roles)
+                            {
+                                <span class="badge af-role af-role-@r.ToLowerInvariant()">@r</span>
+                            }
+                        </td>
+                        <td class="small">@u.BranchName</td>
+                        <td class="text-end text-nowrap">@(u.ApprovalLimit.HasValue ? Display.Money(u.ApprovalLimit.Value) : "—")</td>
+                        <td>
+                            @if (!u.IsActive)
+                            {
+                                <span class="badge text-bg-secondary">Inactive</span>
+                            }
+                            else if (u.IsLockedOut)
+                            {
+                                <span class="badge text-bg-danger" title="Locked until @u.LockoutEnd?.ToString("u")"><i class="bi bi-lock-fill me-1"></i>Locked</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-success">Active</span>
+                            }
+                        </td>
+                        <td class="text-end text-nowrap">
+                            @if (u.IsLockedOut)
+                            {
+                                <form asp-action="Unlock" asp-route-id="@u.Id" method="post" class="d-inline"
+                                      data-confirm="Unlock the account of @u.FullName?" data-confirm-title="Unlock account" data-confirm-button="Unlock">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-unlock me-1"></i>Unlock</button>
+                                </form>
+                            }
+                            <a asp-action="Edit" asp-route-id="@u.Id" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i><span class="visually-hidden">Edit</span></a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,239 @@
+@model LoanApplicationDetailsDto
+@{
+    ViewData["Title"] = Model.ReferenceNumber;
+    var p = Model.Permissions;
+    var nowUtc = (DateTime)(ViewData["NowUtc"] ?? DateTime.UtcNow);
+    var isAuditor = User.IsInRole(AppRoles.Auditor);
+    var isChecker = User.IsInRole(AppRoles.Checker);
+    var pending = Model.Status is LoanStatus.Submitted or LoanStatus.PendingSecondApproval;
+    var age = Display.AgeDays(Model.SubmittedAtUtc, nowUtc);
+}
+
+<nav aria-label="breadcrumb" class="mb-2">
+    <ol class="breadcrumb small mb-0">
+        <li class="breadcrumb-item"><a asp-action="Index">Loan applications</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.ReferenceNumber</li>
+    </ol>
+</nav>
+
+<div class="af-page-header">
+    <div>
+        <h1 class="af-page-title d-flex flex-wrap align-items-center gap-2">
+            <span class="af-ref-lg">@Model.ReferenceNumber</span>
+            <partial name="_StatusBadge" model="Model.Status" />
+            @if (Model.IsImported)
+            {
+                <span class="badge text-bg-light border">Legacy migration</span>
+            }
+        </h1>
+        <p class="af-page-subtitle">@Model.ProductName · @Model.CustomerName · @Model.BranchName</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        @if (p.CanEdit)
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary"><i class="bi bi-pencil me-1"></i>Edit</a>
+        }
+        @if (p.CanSubmit)
+        {
+            <form asp-action="Submit" asp-route-id="@Model.Id" method="post"
+                  data-confirm="Submit @Model.ReferenceNumber for approval? You will not be able to edit it unless a checker returns it."
+                  data-confirm-title="Submit for approval" data-confirm-button="Submit">
+                <input type="hidden" name="RowVersion" value="@Model.RowVersion" />
+                <button type="submit" class="btn btn-primary"><i class="bi bi-send me-1"></i>Submit for approval</button>
+            </form>
+        }
+        @if (p.CanDelete)
+        {
+            <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
+                  data-confirm="Withdraw draft @Model.ReferenceNumber? It will be removed from all lists (kept in the audit trail)."
+                  data-confirm-title="Withdraw draft" data-confirm-button="Withdraw" data-confirm-variant="danger">
+                <input type="hidden" name="RowVersion" value="@Model.RowVersion" />
+                <button type="submit" class="btn btn-outline-danger"><i class="bi bi-trash me-1"></i>Withdraw</button>
+            </form>
+        }
+        @if (p.CanDecide)
+        {
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approveModal"><i class="bi bi-check2-circle me-1"></i>Approve</button>
+            <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#returnModal"><i class="bi bi-arrow-return-left me-1"></i>Return</button>
+            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal"><i class="bi bi-x-circle me-1"></i>Reject</button>
+        }
+        @if (isAuditor)
+        {
+            <a asp-controller="AuditLogs" asp-action="Index" asp-route-Table="LoanApplications" asp-route-RecordKey="@Model.Id" class="btn btn-outline-secondary"><i class="bi bi-shield-check me-1"></i>Audit trail</a>
+        }
+    </div>
+</div>
+
+@if (isChecker && pending && !string.IsNullOrEmpty(p.DecisionBlockedReason))
+{
+    <div class="alert alert-warning d-flex align-items-start gap-2"><i class="bi bi-person-lock fs-5"></i><div><strong>Segregation of duties.</strong> @p.DecisionBlockedReason</div></div>
+}
+@if (Model.Status == LoanStatus.PendingSecondApproval)
+{
+    <div class="alert af-alert-purple d-flex align-items-start gap-2">
+        <i class="bi bi-people fs-5"></i>
+        <div><strong>Dual approval in progress.</strong> First approval given by @Model.FirstApproverName on @Display.Time(Model.FirstApprovedAtUtc). A different checker must give the second approval.</div>
+    </div>
+}
+@if (p.ApprovalNeedsSecondChecker)
+{
+    <div class="alert alert-info d-flex align-items-start gap-2"><i class="bi bi-info-circle fs-5"></i><div>This amount exceeds your approval limit. If you approve, it will be recorded as the <strong>first of two approvals</strong>.</div></div>
+}
+
+<div class="row g-3">
+    <div class="col-xl-8">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="af-kpi"><span class="af-kpi-label">Amount</span><span class="af-kpi-value">@Display.Money(Model.Amount)</span></div>
+            </div>
+            <div class="col-md-4">
+                <div class="af-kpi"><span class="af-kpi-label">Monthly instalment (EMI)</span><span class="af-kpi-value">@Display.Money(Model.MonthlyInstallment)</span></div>
+            </div>
+            <div class="col-md-4">
+                <div class="af-kpi">
+                    <span class="af-kpi-label">Debt-burden ratio</span>
+                    <span class="af-kpi-value @Display.DbrCss(Model.DebtBurdenRatio)">@Display.Percent(Model.DebtBurdenRatio)</span>
+                    <span class="af-kpi-sub">@Display.DbrLabel(Model.DebtBurdenRatio) risk · policy threshold 60%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card af-card mt-3">
+            <div class="card-header af-card-header"><h2 class="af-card-title">Loan details</h2></div>
+            <div class="card-body">
+                <dl class="row af-dl mb-0">
+                    <dt class="col-sm-4">Product</dt><dd class="col-sm-8">@Model.ProductName <span class="text-muted">(@Model.ProductCode)</span></dd>
+                    <dt class="col-sm-4">Tenure</dt><dd class="col-sm-8">@Model.TenureMonths months</dd>
+                    <dt class="col-sm-4">Interest rate</dt><dd class="col-sm-8">@Display.Percent(Model.InterestRate) p.a.</dd>
+                    <dt class="col-sm-4">Gross monthly income</dt><dd class="col-sm-8">@Display.Money(Model.MonthlyIncome)</dd>
+                    <dt class="col-sm-4">Existing obligations</dt><dd class="col-sm-8">@Display.Money(Model.ExistingObligations) / month</dd>
+                    <dt class="col-sm-4">Purpose</dt><dd class="col-sm-8">@Model.Purpose</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card af-card mt-3">
+            <div class="card-header af-card-header"><h2 class="af-card-title">Applicant</h2></div>
+            <div class="card-body">
+                <dl class="row af-dl mb-0">
+                    <dt class="col-sm-4">Customer</dt><dd class="col-sm-8">@Model.CustomerName <span class="text-muted">(@Model.CustomerNumber)</span></dd>
+                    <dt class="col-sm-4">NIC</dt><dd class="col-sm-8"><code>@Model.CustomerNic</code></dd>
+                    <dt class="col-sm-4">Branch</dt><dd class="col-sm-8">@Model.BranchName</dd>
+                </dl>
+            </div>
+        </div>
+
+        @if (p.CanGenerateRiskSummary)
+        {
+            <partial name="_RiskSummaryPanel" model="Model" />
+        }
+    </div>
+
+    <div class="col-xl-4">
+        <div class="card af-card">
+            <div class="card-header af-card-header">
+                <h2 class="af-card-title">Approval history</h2>
+                @if (pending)
+                {
+                    <span class="af-age @Display.AgeCss(age)" title="Days since submission">@age d pending</span>
+                }
+            </div>
+            <div class="card-body">
+                <ol class="af-timeline">
+                    @foreach (var h in Model.History.Reverse())
+                    {
+                        <li class="af-timeline-item @Display.ActionCss(h.ActionType)">
+                            <div class="af-timeline-title">@Display.ActionLabel(h.ActionType)</div>
+                            <div class="af-timeline-meta">@h.PerformedByName · @Display.Time(h.PerformedAtUtc)</div>
+                            @if (h.FromStatus.HasValue)
+                            {
+                                <div class="af-timeline-meta">@Display.StatusLabel(h.FromStatus.Value) → @Display.StatusLabel(h.ToStatus)</div>
+                            }
+                            @if (!string.IsNullOrEmpty(h.Remarks))
+                            {
+                                <blockquote class="af-timeline-remarks">@h.Remarks</blockquote>
+                            }
+                        </li>
+                    }
+                </ol>
+            </div>
+        </div>
+
+        <div class="card af-card mt-3">
+            <div class="card-header af-card-header"><h2 class="af-card-title">Record</h2></div>
+            <div class="card-body">
+                <dl class="row af-dl small mb-0">
+                    <dt class="col-5">Created</dt><dd class="col-7">@Display.Time(Model.CreatedAtUtc)<br /><span class="text-muted">@Model.CreatedByName</span></dd>
+                    <dt class="col-5">Last edited by</dt><dd class="col-7">@Model.LastEditedByName</dd>
+                    <dt class="col-5">Last updated</dt><dd class="col-7">@Display.Time(Model.UpdatedAtUtc)<br /><span class="text-muted">@Model.UpdatedByName</span></dd>
+                    <dt class="col-5">Submitted</dt><dd class="col-7">@Display.Time(Model.SubmittedAtUtc)</dd>
+                    <dt class="col-5">Decision</dt><dd class="col-7">@Display.Time(Model.DecidedAtUtc)<br /><span class="text-muted">@Model.DecidedByName</span></dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (p.CanDecide)
+{
+    <div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form class="modal-content" asp-action="Approve" asp-route-id="@Model.Id" method="post">
+                <input type="hidden" name="RowVersion" value="@Model.RowVersion" />
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5" id="approveTitle"><i class="bi bi-check2-circle text-success me-2"></i>Approve @Model.ReferenceNumber</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cancel"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">You are approving <strong>@Display.Money(Model.Amount)</strong> for <strong>@Model.CustomerName</strong> over @Model.TenureMonths months.</p>
+                    @if (p.ApprovalNeedsSecondChecker)
+                    {
+                        <div class="alert alert-info small py-2">Above your limit: this will be recorded as the first approval and routed to a second checker.</div>
+                    }
+                    <label for="approveRemarks" class="form-label">Remarks <span class="text-muted">(optional)</span></label>
+                    <textarea id="approveRemarks" name="Remarks" class="form-control" rows="3" maxlength="1000"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Confirm approval</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @foreach (var (id, action, title, verb, css) in new[]
+    {
+        ("rejectModal", "Reject", "Reject", "Confirm rejection", "danger"),
+        ("returnModal", "Return", "Return for correction", "Return to maker", "warning"),
+    })
+    {
+        <div class="modal fade" id="@id" tabindex="-1" aria-labelledby="@(id)Title" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <form class="modal-content" asp-action="@action" asp-route-id="@Model.Id" method="post">
+                    <input type="hidden" name="RowVersion" value="@Model.RowVersion" />
+                    <div class="modal-header">
+                        <h2 class="modal-title fs-5" id="@(id)Title">@title @Model.ReferenceNumber</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cancel"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label for="@(id)Remarks" class="form-label">Remarks <span class="text-danger">*</span></label>
+                        <textarea id="@(id)Remarks" name="Remarks" class="form-control" rows="4" required minlength="10" maxlength="1000"
+                                  placeholder="Explain the reason (minimum 10 characters). The maker and auditors will see this."></textarea>
+                        <div class="form-text">Mandatory, at least 10 characters.</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-@css">@verb</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+}
+
+@section Scripts {
+    @if (p.CanGenerateRiskSummary)
+    {
+        <script src="~/js/risk-summary.js" asp-append-version="true"></script>
+    }
+}

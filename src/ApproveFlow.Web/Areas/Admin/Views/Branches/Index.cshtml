@@ -1,0 +1,27 @@
+@model IReadOnlyList<BranchDto>
+@{
+    ViewData["Title"] = "Branches";
+}
+<div class="af-page-header">
+    <div><h1 class="af-page-title">Branches</h1><p class="af-page-subtitle">Inactive branches cannot receive new customers or users.</p></div>
+    <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>New branch</a>
+</div>
+<div class="card af-card">
+    <div class="table-responsive">
+        <table class="table af-table table-hover mb-0">
+            <thead><tr><th>Code</th><th>Name</th><th>City</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var b in Model)
+                {
+                    <tr>
+                        <td><span class="af-ref">@b.Code</span></td>
+                        <td>@b.Name</td>
+                        <td>@b.City</td>
+                        <td>@if (b.IsActive) { <span class="badge text-bg-success">Active</span> } else { <span class="badge text-bg-secondary">Inactive</span> }</td>
+                        <td class="text-end"><a asp-action="Edit" asp-route-id="@b.Id" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i><span class="visually-hidden">Edit</span></a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

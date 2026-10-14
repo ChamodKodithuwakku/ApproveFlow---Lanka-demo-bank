@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>@ViewData["Title"] · ApproveFlow</title>
+    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="af-auth-body">
+    <main class="af-auth">
+        <section class="af-auth-hero" aria-hidden="true">
+            <div class="af-auth-hero-inner">
+                <div class="af-brand-link af-brand-lg">
+                    <partial name="_BrandMark" />
+                    <span>
+                        <span class="af-brand-name">ApproveFlow</span>
+                        <span class="af-brand-org">Lanka Demo Bank</span>
+                    </span>
+                </div>
+                <h1 class="af-auth-headline">Maker-checker loan approvals with a complete audit trail.</h1>
+                <ul class="af-auth-points">
+                    <li><i class="bi bi-people"></i>Four-eyes principle and dual approval above limits</li>
+                    <li><i class="bi bi-shield-lock"></i>Role-based access, lockout and append-only audit log</li>
+                    <li><i class="bi bi-graph-up"></i>Ageing, turnaround and checker performance reporting</li>
+                </ul>
+            </div>
+        </section>
+        <section class="af-auth-panel">
+            <div class="af-auth-card">
+                @RenderBody()
+            </div>
+            <p class="af-auth-footnote">Lanka Demo Bank is a fictional organisation. This system is a portfolio demonstration.</p>
+        </section>
+    </main>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
