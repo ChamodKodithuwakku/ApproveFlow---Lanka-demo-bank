@@ -10,6 +10,9 @@
     <MicrosoftPackageVersion Condition="'$(MicrosoftPackageVersion)' == ''">10.0.13</MicrosoftPackageVersion>
     <MicrosoftExtensionsVersion Condition="'$(TargetFramework)' == 'net8.0'">8.0.3</MicrosoftExtensionsVersion>
     <MicrosoftExtensionsVersion Condition="'$(MicrosoftExtensionsVersion)' == ''">10.0.13</MicrosoftExtensionsVersion>
+    <!-- Serilog.AspNetCore major versions track the ASP.NET Core major version. -->
+    <SerilogAspNetCoreVersion Condition="'$(TargetFramework)' == 'net8.0'">8.0.3</SerilogAspNetCoreVersion>
+    <SerilogAspNetCoreVersion Condition="'$(SerilogAspNetCoreVersion)' == ''">10.0.0</SerilogAspNetCoreVersion>
   </PropertyGroup>
 
   <ItemGroup Label="Microsoft">
@@ -27,7 +30,7 @@
     <PackageVersion Include="CsvHelper" Version="33.1.0" />
     <PackageVersion Include="FluentValidation" Version="12.2.0" />
     <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.2.0" />
-    <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageVersion Include="Serilog.AspNetCore" Version="$(SerilogAspNetCoreVersion)" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.3.0" />
   </ItemGroup>
