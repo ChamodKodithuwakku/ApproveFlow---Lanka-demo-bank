@@ -20,6 +20,14 @@ try
     var builder = WebApplication.CreateBuilder(args);
     var isDevelopment = builder.Environment.IsDevelopment();
 
+    // Do not advertise the server technology (IIS removes its own header via web.config).
+    builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
+    builder.Services.AddHsts(options =>
+    {
+        options.MaxAge = TimeSpan.FromDays(365);
+        options.IncludeSubDomains = true;
+    });
+
     builder.Services.AddSerilog((services, logger) => logger
         .ReadFrom.Configuration(services.GetRequiredService<IConfiguration>())
         .ReadFrom.Services(services)
@@ -90,6 +98,8 @@ try
     var app = builder.Build();
 
     await app.Services.InitialiseDatabaseAsync();
+
+    app.UseMiddleware<SecurityHeadersMiddleware>();
 
     if (app.Environment.IsDevelopment())
     {

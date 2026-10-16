@@ -31,6 +31,12 @@ public sealed class SeedOptions
 
     /// <summary>Shared password for the demo accounts. Supplied via user-secrets or environment variable.</summary>
     public string? DemoPassword { get; set; }
+
+    /// <summary>First administrator for a new (production) database. Bound from Bootstrap:AdminEmail.</summary>
+    public string? BootstrapAdminEmail { get; set; }
+
+    /// <summary>Initial password of the bootstrap administrator. Bound from Bootstrap:AdminPassword.</summary>
+    public string? BootstrapAdminPassword { get; set; }
 }
 
 /// <summary>Includes the provider in the model cache key because the model differs slightly per provider.</summary>

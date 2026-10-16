@@ -28,6 +28,7 @@
   <ItemGroup>
     <!-- Local configuration and runtime artefacts are never published or committed. -->
     <Content Update="appsettings.*.local.json" CopyToPublishDirectory="Never" />
+    <Content Update="appsettings.Example.json" CopyToPublishDirectory="Never" />
     <Content Remove="logs\**" />
     <None Remove="logs\**" />
   </ItemGroup>

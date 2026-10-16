@@ -64,6 +64,8 @@ public sealed class DataSeeder
             }
         }
 
+        await BootstrapFirstAdminAsync(cancellationToken);
+
         if (!_options.Enabled)
         {
             return;
@@ -102,6 +104,44 @@ public sealed class DataSeeder
         await SeedApplicationsAsync(customers, branches, products, users, now, cancellationToken);
         await _db.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("Demo data seeded");
+    }
+
+    /// <summary>
+    /// Production bootstrap: when Bootstrap:AdminEmail and Bootstrap:AdminPassword are supplied (environment variables)
+    /// and no administrator exists yet, creates the first Admin account so the bank can sign in and create real users.
+    /// Remove the settings after first sign-in; the password must be changed immediately.
+    /// </summary>
+    private async Task BootstrapFirstAdminAsync(CancellationToken cancellationToken)
+    {
+        var email = _options.BootstrapAdminEmail;
+        var password = _options.BootstrapAdminPassword;
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password)
+            || (await _userManager.GetUsersInRoleAsync(AppRoles.Admin)).Count > 0)
+        {
+            return;
+        }
+
+        var branch = await _db.Branches.OrderBy(b => b.Id).FirstOrDefaultAsync(cancellationToken);
+        if (branch is null)
+        {
+            branch = new Branch("HO", "Head Office", "Colombo");
+            _db.Branches.Add(branch);
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+
+        var admin = new ApplicationUser
+        {
+            UserName = email,
+            Email = email,
+            EmailConfirmed = true,
+            FullName = "System Administrator",
+            BranchId = branch.Id,
+            IsActive = true,
+            CreatedAtUtc = _clock.GetUtcNow().UtcDateTime,
+        };
+        EnsureSucceeded(await _userManager.CreateAsync(admin, password), "create the bootstrap administrator");
+        EnsureSucceeded(await _userManager.AddToRoleAsync(admin, AppRoles.Admin), "assign the Admin role");
+        _logger.LogWarning("Bootstrap administrator {Email} created. Remove the Bootstrap settings and change the password now", email);
     }
 
     private Dictionary<string, Branch> SeedBranches()

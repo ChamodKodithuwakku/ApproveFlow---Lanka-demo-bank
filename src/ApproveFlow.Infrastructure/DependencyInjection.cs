@@ -33,7 +33,12 @@ public static class DependencyInjection
         services.TryAddSingleton(TimeProvider.System);
 
         services.AddOptions<DatabaseOptions>().BindConfiguration(DatabaseOptions.SectionName);
-        services.AddOptions<SeedOptions>().BindConfiguration(SeedOptions.SectionName);
+        services.AddOptions<SeedOptions>().BindConfiguration(SeedOptions.SectionName)
+            .Configure<IConfiguration>((seed, configuration) =>
+            {
+                seed.BootstrapAdminEmail = configuration["Bootstrap:AdminEmail"];
+                seed.BootstrapAdminPassword = configuration["Bootstrap:AdminPassword"];
+            });
 
         services.AddScoped<AuditableEntityInterceptor>();
         services.AddScoped<AuditTrailInterceptor>();

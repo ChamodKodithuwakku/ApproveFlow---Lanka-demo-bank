@@ -1,0 +1,153 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  build-test:
+    name: Build, test and package
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET (version from global.json)
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore ApproveFlow.sln
+
+      - name: Build (Release, warnings as errors)
+        run: dotnet build ApproveFlow.sln --configuration Release --no-restore
+
+      - name: Test (SQLite in-memory, no SQL Server needed)
+        run: >
+          dotnet test ApproveFlow.sln --configuration Release --no-build
+          --logger "trx;LogFileName=test-results.trx"
+          --collect "XPlat Code Coverage"
+          --results-directory ./artifacts/test-results
+
+      - name: Generate idempotent migration script (for DBA review / manual deployment)
+        run: |
+          dotnet tool restore
+          dotnet tool run dotnet-ef migrations script --idempotent --no-build --configuration Release \
+            --project src/ApproveFlow.Infrastructure --startup-project src/ApproveFlow.Infrastructure \
+            --output ./artifacts/sql/ApproveFlow_Migrations_Idempotent.sql
+
+      - name: Publish web application
+        run: dotnet publish src/ApproveFlow.Web/ApproveFlow.Web.csproj --configuration Release --no-build --output ./artifacts/web
+
+      - name: Upload web package
+        uses: actions/upload-artifact@v4
+        with:
+          name: approveflow-web
+          path: ./artifacts/web
+          retention-days: 14
+
+      - name: Upload migration script
+        uses: actions/upload-artifact@v4
+        with:
+          name: approveflow-sql
+          path: ./artifacts/sql
+          retention-days: 14
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: ./artifacts/test-results
+          retention-days: 14
+
+# ---------------------------------------------------------------------------------------------------------------
+# Deployment (disabled). Uncomment ONE option, add the secrets under Settings > Secrets and variables > Actions,
+# and protect the "production" environment with required reviewers so every release is approved (four-eyes).
+# Database migrations run first, with a deployment login that is separate from the application's runtime login.
+# ---------------------------------------------------------------------------------------------------------------
+
+#  deploy-shared-host:
+#    name: Deploy to Windows ASP.NET host (Web Deploy) - e.g. MonsterASP.NET / SmarterASP.NET
+#    needs: build-test
+#    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+#    runs-on: windows-latest
+#    environment: production
+#    steps:
+#      - uses: actions/download-artifact@v4
+#        with: { name: approveflow-web, path: web }
+#      - uses: actions/download-artifact@v4
+#        with: { name: approveflow-sql, path: sql }
+#      # Apply the idempotent script with the deployment login (sqlcmd is preinstalled on windows-latest).
+#      - name: Apply database migrations
+#        run: sqlcmd -S "${{ secrets.SQL_SERVER }}" -d "${{ secrets.SQL_DATABASE }}" -U "${{ secrets.SQL_DEPLOY_USER }}" -P "${{ secrets.SQL_DEPLOY_PASSWORD }}" -C -b -i sql/ApproveFlow_Migrations_Idempotent.sql
+#      - name: Web Deploy (msdeploy)
+#        shell: pwsh
+#        run: >
+#          & "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
+#          -verb:sync -source:contentPath="$PWD\web"
+#          -dest:contentPath="${{ secrets.WEBDEPLOY_SITE }}",computerName="https://${{ secrets.WEBDEPLOY_HOST }}:8172/msdeploy.axd?site=${{ secrets.WEBDEPLOY_SITE }}",userName="${{ secrets.WEBDEPLOY_USER }}",password="${{ secrets.WEBDEPLOY_PASSWORD }}",authType="Basic"
+#          -enableRule:AppOffline -allowUntrusted
+
+#  deploy-ftp:
+#    name: Deploy via FTPS (alternative for hosts without Web Deploy)
+#    needs: build-test
+#    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+#    runs-on: ubuntu-latest
+#    environment: production
+#    steps:
+#      - uses: actions/download-artifact@v4
+#        with: { name: approveflow-web, path: web }
+#      - uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+#        with:
+#          server: ${{ secrets.FTP_HOST }}
+#          username: ${{ secrets.FTP_USER }}
+#          password: ${{ secrets.FTP_PASSWORD }}
+#          protocol: ftps
+#          local-dir: ./web/
+#          server-dir: ${{ secrets.FTP_REMOTE_DIR }}
+
+#  deploy-azure:
+#    name: Deploy to Azure App Service + Azure SQL
+#    needs: build-test
+#    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+#    runs-on: ubuntu-latest
+#    environment: production
+#    permissions:
+#      id-token: write   # OpenID Connect federation: no long-lived Azure credentials in GitHub
+#      contents: read
+#    steps:
+#      - uses: actions/download-artifact@v4
+#        with: { name: approveflow-web, path: web }
+#      - uses: actions/download-artifact@v4
+#        with: { name: approveflow-sql, path: sql }
+#      - uses: azure/login@v2
+#        with:
+#          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+#          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+#          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+#      - uses: azure/sql-action@v2.3
+#        with:
+#          connection-string: ${{ secrets.AZURE_SQL_DEPLOY_CONNECTION_STRING }}
+#          path: ./sql/ApproveFlow_Migrations_Idempotent.sql
+#      - uses: azure/webapps-deploy@v3
+#        with:
+#          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+#          package: ./web

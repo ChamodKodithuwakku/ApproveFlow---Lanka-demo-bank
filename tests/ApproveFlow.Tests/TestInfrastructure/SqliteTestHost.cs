@@ -36,7 +36,7 @@ public sealed class SqliteTestHost : IAsyncDisposable
     public ServiceProvider Services { get; }
     public TestCurrentUser CurrentUser { get; }
 
-    public static async Task<SqliteTestHost> CreateAsync(bool seedDemoData = true)
+    public static async Task<SqliteTestHost> CreateAsync(bool seedDemoData = true, IDictionary<string, string?>? extraConfiguration = null)
     {
         // A named shared-cache in-memory database lives as long as at least one connection is open.
         var connectionString = $"Data Source=file:approveflow-{Guid.NewGuid():N}?mode=memory&cache=shared";
@@ -51,6 +51,7 @@ public sealed class SqliteTestHost : IAsyncDisposable
                 ["Seed:Enabled"] = seedDemoData.ToString(),
                 ["Seed:DemoPassword"] = DemoPassword,
             })
+            .AddInMemoryCollection(extraConfiguration ?? new Dictionary<string, string?>())
             .Build();
 
         var currentUser = new TestCurrentUser();
