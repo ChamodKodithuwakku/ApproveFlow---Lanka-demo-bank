@@ -31,6 +31,7 @@
     <Using Include="Xunit" />
     <!-- The SQL scripts and the sample migration file are exercised by tests. -->
     <None Include="..\..\database\**\*.sql" Link="TestData\database\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\docs\sample-legacy-loans.csv" Link="TestData\sample-legacy-loans.csv" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

@@ -207,6 +207,19 @@ public sealed class LoanApplicationsApiTests : IClassFixture<ApproveFlowApiFacto
     }
 
     [Fact]
+    public async Task Reports_summary_is_available_to_auditors_but_not_makers()
+    {
+        using var auditor = await _factory.CreateClientForAsync("auditor@demo.lk");
+        var response = await auditor.GetAsync("/api/v1/reports/summary");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var report = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.True(report.RootElement.GetProperty("overall").GetProperty("totalApplications").GetInt32() > 0);
+
+        using var maker = await _factory.CreateClientForAsync("maker1@demo.lk");
+        Assert.Equal(HttpStatusCode.Forbidden, (await maker.GetAsync("/api/v1/reports/summary")).StatusCode);
+    }
+
+    [Fact]
     public async Task Swagger_document_describes_the_versioned_api_with_bearer_security()
     {
         using var client = _factory.CreateClient();
