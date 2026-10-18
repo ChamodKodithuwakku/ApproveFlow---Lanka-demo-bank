@@ -1,6 +1,6 @@
 # ApproveFlow – Maker-Checker Loan Approval System
 
-[![CI](https://github.com/YOUR-ACCOUNT/approveflow/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR-ACCOUNT/approveflow/actions/workflows/ci.yml)
+[![CI](https://github.com/ChamodKodithuwakku/ApproveFlow---Lanka-demo-bank/actions/workflows/ci.yml/badge.svg)](https://github.com/ChamodKodithuwakku/ApproveFlow---Lanka-demo-bank/actions/workflows/ci.yml)
 ![.NET](https://img.shields.io/badge/.NET-10%20LTS-512BD4)
 ![SQL Server](https://img.shields.io/badge/SQL%20Server-2019%2B%20%7C%20Azure%20SQL-CC2927)
 ![Tests](https://img.shields.io/badge/tests-92%20passing-2ea44f)
@@ -148,7 +148,7 @@ Prerequisite: the [.NET 10 SDK](https://dotnet.microsoft.com/download). SQL Serv
 ### Option A: quick demo, no database install (SQLite)
 
 ```bash
-git clone https://github.com/YOUR-ACCOUNT/approveflow.git && cd approveflow
+git clone https://github.com/ChamodKodithuwakku/ApproveFlow---Lanka-demo-bank.git && cd ApproveFlow---Lanka-demo-bank
 powershell -ExecutionPolicy Bypass -File scripts/setup-dev.ps1   # Linux/macOS: ./scripts/setup-dev.sh (stores the demo password + JWT key in user-secrets)
 dotnet run --project src/ApproveFlow.Web --launch-profile sqlite-demo
 ```
