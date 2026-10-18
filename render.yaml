@@ -1,0 +1,21 @@
+# Render Blueprint: free public demo of ApproveFlow (Docker, SQLite, seeded fictional data).
+# Render dashboard -> New -> Blueprint -> select this repository -> Apply.
+services:
+  - type: web
+    name: approveflow-demo
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Demo
+      - key: PORT
+        value: "8080"
+      # Random per deployment; never committed.
+      - key: Jwt__SigningKey
+        generateValue: true
+      # Shared password of the fictional demo accounts (listed in README.md).
+      - key: Seed__DemoPassword
+        value: ApproveFlow@2026

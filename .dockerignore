@@ -1,0 +1,17 @@
+**/bin/
+**/obj/
+**/logs/
+**/*.db
+**/*.db-shm
+**/*.db-wal
+.git/
+.github/
+.claude/
+.vs/
+.vscode/
+tests/
+docs/
+scripts/
+.env
+**/appsettings.*.local.json
+New Text Document.txt

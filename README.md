@@ -278,6 +278,11 @@ Migrations are applied by the release process from the idempotent script or a mi
 app in Production. The step-by-step guide is in [`docs/Deployment.md`](docs/Deployment.md). For a host limited to
 .NET 8, build with `-p:ApproveFlowTargetFramework=net8.0`.
 
+**Free public demo:** the repository includes a `Dockerfile` and a Render Blueprint (`render.yaml`). On
+[render.com](https://render.com) choose **New → Blueprint**, select this repository, and you get an HTTPS demo with
+the seeded accounts (see [Deployment → C](docs/Deployment.md#c-free-public-demo-on-render-docker)). Vercel, Netlify
+and GitHub Pages cannot run ASP.NET Core servers, so they return `404 NOT_FOUND` for this project.
+
 ## Documentation
 
 | Document | Purpose |

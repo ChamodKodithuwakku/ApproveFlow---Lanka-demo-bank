@@ -1,9 +1,10 @@
 # ApproveFlow – Deployment Guide
 
-Two supported targets:
+Supported targets:
 
 - **A. Windows ASP.NET + MS SQL shared host** (e.g. MonsterASP.NET, SmarterASP.NET)
 - **B. Azure App Service + Azure SQL Database**
+- **C. Free public demo on Render** (Docker + SQLite, seeded demo data). Vercel cannot host ASP.NET Core, see C.
 
 Both run the same build output: a framework-dependent ASP.NET Core app hosted in IIS / App Service, with SQL Server
 as the database.
@@ -28,8 +29,8 @@ as the database.
    to run on every release. It creates tables, keys, indexes, check constraints, the reference-number sequence, the
    reporting procedures, the ageing view and the append-only audit trigger.
 4. **Generate secrets** (keep them in a password manager, never in git):
-   - `Jwt__SigningKey`: a random string of at least 32 characters, e.g.
-     `[Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(48))` in PowerShell.
+   - `Jwt__SigningKey`: a random string of at least 32 characters. In PowerShell (5.1 or 7):
+     `$b = New-Object byte[] 48; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); [Convert]::ToBase64String($b)`
    - Database login and password for the application (runtime), ideally separate from the deployment login.
    - Bootstrap admin e-mail and a temporary password (first deployment only).
 
@@ -181,6 +182,32 @@ SQL script, then deploys with `azure/webapps-deploy`. Protect the `production` e
    deployment slots (`staging` → swap) for zero-downtime releases.
 
 ---
+
+## C. Free public demo on Render (Docker)
+
+For a shareable portfolio link without paying for hosting. It runs the **Demo** environment: the production
+pipeline (friendly error pages, HSTS, Secure cookies, security headers), SQLite, and the fictional demo data
+seeded at start-up. The data resets whenever the service restarts. Swagger is on and the login page lists the demo
+accounts and password.
+
+> **Why not Vercel / Netlify / GitHub Pages?** They host static sites and short-lived JavaScript/Python functions.
+> ApproveFlow is an always-on ASP.NET Core server with a database, which those platforms cannot run (you get
+> `404 NOT_FOUND`). Use a host with a .NET runtime or Docker: Render, Azure App Service, MonsterASP.NET, Railway or Fly.io.
+
+1. Sign in at <https://render.com> with your GitHub account.
+2. **New → Blueprint** → choose this repository → **Apply**. `render.yaml` creates a free Docker web service named
+   `approveflow-demo` with a generated `Jwt__SigningKey` and the demo password.
+3. The first build takes about 5–8 minutes (restore, Release build, publish). When it is *Live*, open
+   `https://approveflow-demo.onrender.com` (Render shows the exact URL) and sign in, for example as `checker1@demo.lk`.
+4. Every push to `main` redeploys automatically (`autoDeploy: true`).
+
+Notes:
+- Free instances sleep after about 15 minutes without traffic. The first request afterwards takes about a minute
+  to wake the service, and the demo data is re-seeded.
+- The same image runs anywhere: `docker build -t approveflow .` then
+  `docker run -p 8080:8080 -e Jwt__SigningKey=<48+ random chars> -e Seed__DemoPassword=ApproveFlow@2026 approveflow`.
+- This mode uses SQLite, so the reports run portable LINQ queries instead of the stored procedures. To demonstrate
+  the SQL Server objects, use option A or B with a real SQL Server database.
 
 ## Running migrations in production: summary
 
